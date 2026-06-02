@@ -216,7 +216,7 @@ export function PassportList({ initialPassports, brandId }: PassportListProps) {
       <EmptyState
         icon={FileText}
         title="No passports yet"
-        description="Create your first Digital Product Passport to give your products a verified digital identity."
+        description="Create your first Digital Product Passport to get started."
         action={
           <Link
             href="/passports/new"
