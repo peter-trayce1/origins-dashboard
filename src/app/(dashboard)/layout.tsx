@@ -34,24 +34,37 @@ export default async function DashboardLayout({
 
   if (!member) redirect("/apply");
 
-  // Use service client to check org status (bypasses RLS)
-  const service = createServiceClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    { auth: { autoRefreshToken: false, persistSession: false } }
-  );
+  // Check org status — if this fails for any reason, skip the status check
+  // rather than crashing the entire layout with a 500.
+  let orgStatus: string | null = null;
+  let trialEndDate: string | null = null;
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: orgRow } = await (service as any)
-    .from("organisations")
-    .select("organisation_status, trial_end_date")
-    .eq("id", member.organisation_id)
-    .maybeSingle();
+  try {
+    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 
-  if (orgRow?.organisation_status === "pending")   redirect("/pending");
-  if (orgRow?.organisation_status === "suspended") redirect("/pending");
+    if (serviceKey && supabaseUrl) {
+      const service = createServiceClient(supabaseUrl, serviceKey, {
+        auth: { autoRefreshToken: false, persistSession: false },
+      });
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data: orgRow } = await (service as any)
+        .from("organisations")
+        .select("organisation_status, trial_end_date")
+        .eq("id", member.organisation_id)
+        .maybeSingle();
 
-  // Non-critical: billing/usage — wrap so a failure never crashes the layout
+      orgStatus = (orgRow?.organisation_status as string) ?? null;
+      trialEndDate = (orgRow?.trial_end_date as string) ?? null;
+    }
+  } catch (err) {
+    console.error("[DashboardLayout] org status check failed:", err);
+  }
+
+  if (orgStatus === "pending")   redirect("/pending");
+  if (orgStatus === "suspended") redirect("/pending");
+
+  // Non-critical: billing/usage
   try {
     const { data: brand } = await supabase
       .from("brands")
@@ -66,8 +79,7 @@ export default async function DashboardLayout({
         getActivePassportCount(brand.id),
       ]);
 
-      const isTrial      = billing.billingPlan === "trial";
-      const trialEndDate = (orgRow?.trial_end_date as string | null) ?? null;
+      const isTrial = billing.billingPlan === "trial";
       const daysRemaining = trialEndDate
         ? Math.max(0, Math.ceil((new Date(trialEndDate).getTime() - Date.now()) / 86_400_000))
         : null;
