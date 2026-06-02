@@ -1,49 +1,65 @@
+"use client";
+
+import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Plus, Upload, FileText } from "lucide-react";
-import { createClient } from "@/lib/supabase/server";
+import { Plus, Upload, FileText, Loader2 } from "lucide-react";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { PassportList } from "@/components/passport/PassportList";
-import type { Metadata } from "next";
+import { createClient } from "@/lib/supabase/client";
 
-export const metadata: Metadata = { title: "Passports" };
+export default function PassportsPage() {
+  const [passports, setPassports] = useState<unknown[]>([]);
+  const [brandId, setBrandId] = useState("");
+  const [loading, setLoading] = useState(true);
 
-export default async function PassportsPage() {
-  const supabase = await createClient();
+  useEffect(() => {
+    async function load() {
+      try {
+        const supabase = createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) { window.location.href = "/login"; return; }
 
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
+        const { data: member } = await supabase
+          .from("organisation_members")
+          .select("organisation_id")
+          .eq("user_id", user.id)
+          .not("accepted_at", "is", null)
+          .limit(1)
+          .maybeSingle();
 
-  const { data: member } = await supabase
-    .from("organisation_members")
-    .select("organisation_id")
-    .eq("user_id", user.id)
-    .not("accepted_at", "is", null)
-    .limit(1)
-    .maybeSingle();
+        if (!member) { setLoading(false); return; }
 
-  const { data: brand } = member
-    ? await supabase
-        .from("brands")
-        .select("id, name")
-        .eq("organisation_id", member.organisation_id)
-        .limit(1)
-        .maybeSingle()
-    : { data: null };
+        const { data: brand } = await supabase
+          .from("brands")
+          .select("id")
+          .eq("organisation_id", member.organisation_id)
+          .limit(1)
+          .maybeSingle();
 
-  const { data: passports } = brand
-    ? await supabase
-        .from("passports")
-        .select(`
-          id, product_name, sku, slug, status, completeness_score,
-          primary_image_url, collection_name, passport_code, category,
-          updated_at, published_at,
-          qr_codes(id, scan_count)
-        `)
-        .eq("brand_id", brand.id)
-        .order("updated_at", { ascending: false })
-    : { data: null };
+        if (!brand) { setLoading(false); return; }
 
-  const list = passports ?? [];
+        setBrandId(brand.id);
+
+        const { data } = await supabase
+          .from("passports")
+          .select(`
+            id, product_name, sku, slug, status, completeness_score,
+            primary_image_url, collection_name, passport_code, category,
+            updated_at, published_at,
+            qr_codes(id, scan_count)
+          `)
+          .eq("brand_id", brand.id)
+          .order("updated_at", { ascending: false });
+
+        setPassports(data ?? []);
+      } catch (err) {
+        console.error("[PassportsPage]", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    load();
+  }, []);
 
   const actions = (
     <div className="flex items-center gap-2">
@@ -64,7 +80,18 @@ export default async function PassportsPage() {
     </div>
   );
 
-  if (list.length === 0) {
+  if (loading) {
+    return (
+      <div className="space-y-6 max-w-6xl">
+        <PageHeader title="Passports" description="Loading…" actions={actions} />
+        <div className="flex items-center justify-center py-24">
+          <Loader2 className="h-6 w-6 animate-spin text-[#8C8C8C]" />
+        </div>
+      </div>
+    );
+  }
+
+  if (passports.length === 0) {
     return (
       <div className="space-y-6 max-w-6xl">
         <PageHeader title="Passports" description="0 Digital Product Passports" actions={actions} />
@@ -73,7 +100,9 @@ export default async function PassportsPage() {
             <FileText className="h-6 w-6 text-[#8C8C8C]" />
           </div>
           <h3 className="text-[15px] font-semibold text-black mb-1">No passports yet</h3>
-          <p className="text-sm text-[#525252] mb-6">Create your first Digital Product Passport to get started.</p>
+          <p className="text-sm text-[#525252] mb-6">
+            Create your first Digital Product Passport to get started.
+          </p>
           <Link
             href="/passports/new"
             className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-transparent bg-primary px-4 text-sm font-medium text-primary-foreground transition-all hover:bg-primary/90"
@@ -90,11 +119,11 @@ export default async function PassportsPage() {
     <div className="space-y-6 max-w-6xl">
       <PageHeader
         title="Passports"
-        description={`${list.length} Digital Product Passport${list.length !== 1 ? "s" : ""}`}
+        description={`${passports.length} Digital Product Passport${passports.length !== 1 ? "s" : ""}`}
         actions={actions}
       />
       {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-      <PassportList initialPassports={list as any[]} brandId={brand.id} />
+      <PassportList initialPassports={passports as any[]} brandId={brandId} />
     </div>
   );
 }
