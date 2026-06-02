@@ -34,7 +34,7 @@ export interface PlanConfig {
   highlighted?: boolean;
 }
 
-export const PLAN_CONFIG: Record<Exclude<BillingPlan, "none">, PlanConfig> = {
+export const PLAN_CONFIG: Record<Exclude<BillingPlan, "none" | "trial">, PlanConfig> = {
   essentials: {
     id: "essentials",
     label: "Essentials",

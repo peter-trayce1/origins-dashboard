@@ -13,6 +13,7 @@ import type { BillingPlan, BillingInterval } from "@/types/billing";
 
 const PRICE_MAP: Record<BillingPlan, Record<BillingInterval, string | undefined>> = {
   none:       { monthly: undefined,                                        annual: undefined },
+  trial:      { monthly: undefined,                                        annual: undefined },
   essentials: { monthly: process.env.STRIPE_PRICE_ESSENTIALS_MONTHLY,     annual: process.env.STRIPE_PRICE_ESSENTIALS_ANNUAL },
   growth:     { monthly: process.env.STRIPE_PRICE_GROWTH_MONTHLY,         annual: process.env.STRIPE_PRICE_GROWTH_ANNUAL },
   enterprise: { monthly: undefined,                                        annual: undefined },

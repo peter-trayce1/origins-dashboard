@@ -185,7 +185,7 @@ export function Step5Certifications() {
               <Label className="text-[10px] font-medium text-[#8C8C8C]">Certification *</Label>
               <Select
                 value={cert.certification_name}
-                onValueChange={(v: string) => updateCert(idx, "certification_name", v ?? "")}
+                onValueChange={(v) => updateCert(idx, "certification_name", v ?? "")}
               >
                 <SelectTrigger className="h-8 text-[13px]">
                   <SelectValue placeholder="Select certification" />
@@ -283,7 +283,7 @@ export function Step5Certifications() {
               <Label className="text-[10px] font-medium text-[#8C8C8C]">Data confidence</Label>
               <Select
                 value={cert.confidence_level}
-                onValueChange={(v: string) => updateCert(idx, "confidence_level", v ?? "brand_declared")}
+                onValueChange={(v) => updateCert(idx, "confidence_level", v ?? "brand_declared")}
               >
                 <SelectTrigger className="h-8 text-[13px]">
                   <SelectValue />

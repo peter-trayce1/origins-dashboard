@@ -202,7 +202,7 @@ export function Step1ProductInfo() {
       <div className="grid grid-cols-2 gap-2">
         <div className="space-y-1">
           <Label className="text-[11px] font-medium text-[#525252]">Category</Label>
-          <Select value={step1.category} onValueChange={(v: string) => update("category", v ?? "")}>
+          <Select value={step1.category} onValueChange={(v) => update("category", v ?? "")}>
             <SelectTrigger className="h-8 text-[13px]">
               <SelectValue placeholder="Select" />
             </SelectTrigger>
@@ -213,7 +213,7 @@ export function Step1ProductInfo() {
         </div>
         <div className="space-y-1">
           <Label className="text-[11px] font-medium text-[#525252]">Gender / Audience</Label>
-          <Select value={step1.gender} onValueChange={(v: string) => update("gender", v ?? "")}>
+          <Select value={step1.gender} onValueChange={(v) => update("gender", v ?? "")}>
             <SelectTrigger className="h-8 text-[13px]">
               <SelectValue placeholder="Select" />
             </SelectTrigger>
@@ -230,7 +230,7 @@ export function Step1ProductInfo() {
           Country of origin <span className="text-red-500">*</span>
           <span className="text-[10px] font-normal text-[#8C8C8C] ml-1">Required by EU textile regulations</span>
         </Label>
-        <Select value={step1.country_of_origin} onValueChange={(v: string) => update("country_of_origin", v ?? "")}>
+        <Select value={step1.country_of_origin} onValueChange={(v) => update("country_of_origin", v ?? "")}>
           <SelectTrigger className="h-8 text-[13px]">
             <SelectValue placeholder="Select country" />
           </SelectTrigger>

@@ -337,7 +337,7 @@ function CoreMetricCard({
           </div>
           <div className="flex items-center gap-1 shrink-0">
             {unitOptions && onUnitChange ? (
-              <Select value={unit} onValueChange={(v: string) => onUnitChange(v)}>
+              <Select value={unit} onValueChange={(v) => onUnitChange(v)}>
                 <SelectTrigger className="h-8 text-[13px] w-24"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   {unitOptions.map((u) => (
@@ -359,7 +359,7 @@ function CoreMetricCard({
           </FieldLabel>
           <Select
             value={meta.verification_status}
-            onValueChange={(v: string) => onMetaChange({ verification_status: v as VerificationStatus })}
+            onValueChange={(v) => onMetaChange({ verification_status: v as VerificationStatus })}
           >
             <SelectTrigger className="h-8 text-[13px]"><SelectValue /></SelectTrigger>
             <SelectContent>
@@ -431,7 +431,7 @@ function CoreMetricCard({
               </FieldLabel>
               <Select
                 value={meta.scope || "__none__"}
-                onValueChange={(v: string) => onMetaChange({ scope: v === "__none__" ? "" : v })}
+                onValueChange={(v) => onMetaChange({ scope: v === "__none__" ? "" : v })}
               >
                 <SelectTrigger className="h-8 text-[13px]"><SelectValue placeholder="Select scope…" /></SelectTrigger>
                 <SelectContent>
@@ -649,7 +649,7 @@ function MetricCard({
               </FieldLabel>
               <Select
                 value={metric.metric_type}
-                onValueChange={(v: string) => onUpdate({ metric_type: v as MetricType })}
+                onValueChange={(v) => onUpdate({ metric_type: v as MetricType })}
               >
                 <SelectTrigger className="h-8 text-[13px]"><SelectValue /></SelectTrigger>
                 <SelectContent>
@@ -665,7 +665,7 @@ function MetricCard({
               </FieldLabel>
               <Select
                 value={metric.metric_scope || "__none__"}
-                onValueChange={(v: string) => onUpdate({ metric_scope: v === "__none__" ? "" : v })}
+                onValueChange={(v) => onUpdate({ metric_scope: v === "__none__" ? "" : v })}
               >
                 <SelectTrigger className="h-8 text-[13px]"><SelectValue placeholder="Optional" /></SelectTrigger>
                 <SelectContent>
@@ -708,7 +708,7 @@ function MetricCard({
             </FieldLabel>
             <Select
               value={metric.verification_status}
-              onValueChange={(v: string) => onUpdate({ verification_status: v as VerificationStatus })}
+              onValueChange={(v) => onUpdate({ verification_status: v as VerificationStatus })}
             >
               <SelectTrigger className="h-8 text-[13px]"><SelectValue /></SelectTrigger>
               <SelectContent>

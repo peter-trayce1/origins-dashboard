@@ -182,7 +182,7 @@ export function BillingPageClient({ billing, success, cancelled }: Props) {
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2.5 flex-wrap mb-1">
                 <p className="text-[15px] font-semibold text-black">14-day free trial</p>
-                {trialDaysRemaining !== null && (
+                {trialDaysRemaining != null && (
                   <span className={`text-[11px] font-semibold px-2.5 py-0.5 rounded-full border ${
                     trialDaysRemaining <= 3
                       ? "bg-red-50 text-red-700 border-red-200"
@@ -200,7 +200,7 @@ export function BillingPageClient({ billing, success, cancelled }: Props) {
                   : "Upgrade to a paid plan to keep publishing passports after your trial ends."
                 }
               </p>
-              {trialDaysRemaining !== null && (
+              {trialDaysRemaining != null && (
                 <div className="mt-2.5 h-1.5 bg-[#F0F0EE] rounded-full overflow-hidden max-w-xs">
                   <div
                     className={`h-full rounded-full transition-all ${

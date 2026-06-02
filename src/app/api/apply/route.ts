@@ -10,13 +10,11 @@ function makeSlug(name: string): string {
     .slice(0, 60);
 }
 
-async function makeUniqueOrgSlug(supabase: ReturnType<typeof createServiceClient>, base: string): Promise<string> {
-  let slug = base;
+async function makeUniqueOrgSlug(base: string, checkExists: (slug: string) => Promise<boolean>): Promise<string> {
   let i = 0;
   while (true) {
-    const candidate = i === 0 ? slug : `${slug}-${i}`;
-    const { data } = await supabase.from("organisations").select("id").eq("slug", candidate).maybeSingle();
-    if (!data) return candidate;
+    const candidate = i === 0 ? base : `${base}-${i}`;
+    if (!(await checkExists(candidate))) return candidate;
     i++;
   }
 }
@@ -73,7 +71,10 @@ export async function POST(request: NextRequest) {
 
   try {
     // 2. Create organisation (status: pending)
-    const slug = await makeUniqueOrgSlug(supabase, makeSlug(brand_name));
+    const slug = await makeUniqueOrgSlug(makeSlug(brand_name), async (s) => {
+      const { data } = await supabase.from("organisations").select("id").eq("slug", s).maybeSingle();
+      return Boolean(data);
+    });
 
     const { data: org, error: orgError } = await supabase
       .from("organisations")

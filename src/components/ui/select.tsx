@@ -6,13 +6,20 @@ import { Select as SelectPrimitive } from "@base-ui/react/select"
 import { cn } from "@/lib/utils"
 import { ChevronDownIcon, CheckIcon, ChevronUpIcon } from "lucide-react"
 
-function Select(props: SelectPrimitive.Root.Props) {
+type SelectProps = Omit<SelectPrimitive.Root.Props<string>, "onValueChange"> & {
+  onValueChange?: (value: string) => void;
+}
+
+function Select({ onValueChange, ...props }: SelectProps) {
+  const handleValueChange = onValueChange
+    ? (v: string | null) => onValueChange(v ?? "")
+    : undefined;
   // `value={formField}` passes the prop even when undefined — coerce so Base UI stays controlled.
   if ("value" in props) {
     const { value, ...rest } = props
-    return <SelectPrimitive.Root {...rest} value={value ?? ""} />
+    return <SelectPrimitive.Root {...rest} value={value ?? ""} onValueChange={handleValueChange} />
   }
-  return <SelectPrimitive.Root {...props} />
+  return <SelectPrimitive.Root {...props} onValueChange={handleValueChange} />
 }
 
 function SelectGroup({ className, ...props }: SelectPrimitive.Group.Props) {

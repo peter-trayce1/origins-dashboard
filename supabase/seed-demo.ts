@@ -189,15 +189,10 @@ async function seed() {
   // None are published — active passport count stays at 0.
 
   type PassportRow = { id: string };
-  const { data: existingPassports } = await (supabase as unknown as {
-    from: (t: string) => {
-      select: (c: string, opts: object) => {
-        eq: (k: string, v: string) => { eq: (k: string, v: string) => Promise<{ count: number | null }> };
-      };
-    };
-  }).from("passports").select("id", { count: "exact", head: true }).eq("brand_id", brandId).eq("status", "draft");
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const countResult: any = await (supabase as any).from("passports").select("id", { count: "exact", head: true }).eq("brand_id", brandId).eq("status", "draft");
 
-  const existingCount = (existingPassports as unknown as { count: number | null })?.count ?? 0;
+  const existingCount: number = countResult?.count ?? 0;
 
   if (existingCount >= 3) {
     ok("Sample draft passports already exist");

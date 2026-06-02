@@ -116,7 +116,7 @@ export function Step6Care() {
           <div key={idx} className="flex items-center gap-2">
             <Select
               value={care.type}
-              onValueChange={(v: string) => updateCare(idx, "type", v ?? "wash")}
+              onValueChange={(v) => updateCare(idx, "type", v ?? "wash")}
             >
               <SelectTrigger className="w-32 h-8 text-[12px] shrink-0">
                 <SelectValue />

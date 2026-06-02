@@ -298,7 +298,7 @@ export function PassportList({ initialPassports, brandId }: PassportListProps) {
               className="pl-9"
             />
           </div>
-          <Select value={statusFilter} onValueChange={(v: string) => setStatusFilter(v ?? "all")}>
+          <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v ?? "all")}>
             <SelectTrigger className="w-36">
               <SelectValue placeholder="All statuses" />
             </SelectTrigger>

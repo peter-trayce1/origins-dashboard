@@ -213,7 +213,7 @@ export function Step2Materials() {
               <Label className="text-[10px] font-medium text-[#8C8C8C]">Data confidence</Label>
               <Select
                 value={material.confidence_level}
-                onValueChange={(v: string) => updateMaterial(idx, "confidence_level", v)}
+                onValueChange={(v) => updateMaterial(idx, "confidence_level", v)}
               >
                 <SelectTrigger className="h-8 text-[13px]">
                   <SelectValue />

@@ -149,7 +149,7 @@ export function Step8Circularity() {
           <Label className="text-[10px] font-medium text-[#8C8C8C]">Overall recyclability</Label>
           <Select
             value={step6.recyclability || ""}
-            onValueChange={(v: string) => setStep6({ recyclability: v as typeof step6.recyclability })}
+            onValueChange={(v) => setStep6({ recyclability: v as typeof step6.recyclability })}
           >
             <SelectTrigger className="h-8 text-[13px]">
               <SelectValue placeholder="Select" />

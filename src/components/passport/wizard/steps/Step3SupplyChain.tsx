@@ -157,7 +157,7 @@ export function Step3SupplyChain() {
                 <Label className="text-[10px] font-medium text-[#8C8C8C]">Process stage *</Label>
                 <Select
                   value={facility.process_stage}
-                  onValueChange={(v: string) => updateFacility(idx, "process_stage", v)}
+                  onValueChange={(v) => updateFacility(idx, "process_stage", v)}
                 >
                   <SelectTrigger className="h-8 text-[13px]">
                     <SelectValue placeholder="Select stage" />
@@ -173,7 +173,7 @@ export function Step3SupplyChain() {
                 <Label className="text-[10px] font-medium text-[#8C8C8C]">Supply chain tier</Label>
                 <Select
                   value={String(facility.tier)}
-                  onValueChange={(v: string) => updateFacility(idx, "tier", Number(v))}
+                  onValueChange={(v) => updateFacility(idx, "tier", Number(v))}
                 >
                   <SelectTrigger className="h-8 text-[13px]">
                     <SelectValue />
@@ -194,7 +194,7 @@ export function Step3SupplyChain() {
                 <Label className="text-[10px] font-medium text-[#8C8C8C]">Country *</Label>
                 <Select
                   value={facility.country}
-                  onValueChange={(v: string) => updateFacility(idx, "country", v)}
+                  onValueChange={(v) => updateFacility(idx, "country", v)}
                 >
                   <SelectTrigger className="h-8 text-[13px]">
                     <SelectValue placeholder="Select country" />
@@ -248,7 +248,7 @@ export function Step3SupplyChain() {
                 <Label className="text-[10px] font-medium text-[#8C8C8C]">Relationship</Label>
                 <Select
                   value={facility.ownership_relationship || ""}
-                  onValueChange={(v: string) => updateFacility(idx, "ownership_relationship", v as WizardFacility["ownership_relationship"])}
+                  onValueChange={(v) => updateFacility(idx, "ownership_relationship", v as WizardFacility["ownership_relationship"])}
                 >
                   <SelectTrigger className="h-8 text-[13px]">
                     <SelectValue placeholder="Select" />
@@ -264,7 +264,7 @@ export function Step3SupplyChain() {
                 <Label className="text-[10px] font-medium text-[#8C8C8C]">Data confidence</Label>
                 <Select
                   value={facility.confidence_level}
-                  onValueChange={(v: string) => updateFacility(idx, "confidence_level", v as WizardFacility["confidence_level"])}
+                  onValueChange={(v) => updateFacility(idx, "confidence_level", v as WizardFacility["confidence_level"])}
                 >
                   <SelectTrigger className="h-8 text-[13px]">
                     <SelectValue />
