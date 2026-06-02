@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
 import { Plus, Upload, FileText } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { PageHeader } from "@/components/layout/PageHeader";
@@ -22,27 +21,27 @@ export default async function PassportsPage() {
     .limit(1)
     .maybeSingle();
 
-  if (!member) redirect("/onboarding");
+  const { data: brand } = member
+    ? await supabase
+        .from("brands")
+        .select("id, name")
+        .eq("organisation_id", member.organisation_id)
+        .limit(1)
+        .maybeSingle()
+    : { data: null };
 
-  const { data: brand } = await supabase
-    .from("brands")
-    .select("id, name")
-    .eq("organisation_id", member.organisation_id)
-    .limit(1)
-    .maybeSingle();
-
-  if (!brand) redirect("/onboarding");
-
-  const { data: passports } = await supabase
-    .from("passports")
-    .select(`
-      id, product_name, sku, slug, status, completeness_score,
-      primary_image_url, collection_name, passport_code, category,
-      updated_at, published_at,
-      qr_codes(id, scan_count)
-    `)
-    .eq("brand_id", brand.id)
-    .order("updated_at", { ascending: false });
+  const { data: passports } = brand
+    ? await supabase
+        .from("passports")
+        .select(`
+          id, product_name, sku, slug, status, completeness_score,
+          primary_image_url, collection_name, passport_code, category,
+          updated_at, published_at,
+          qr_codes(id, scan_count)
+        `)
+        .eq("brand_id", brand.id)
+        .order("updated_at", { ascending: false })
+    : { data: null };
 
   const list = passports ?? [];
 
