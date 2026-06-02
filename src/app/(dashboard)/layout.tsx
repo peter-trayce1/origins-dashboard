@@ -22,34 +22,37 @@ export default async function DashboardLayout({
     trialEndDate: string | null;
   } | null = null;
 
+  // Redirects must be outside try/catch — Next.js redirect() throws internally
+  // and a catch block will swallow it, breaking the page.
+  const { data: member } = await supabase
+    .from("organisation_members")
+    .select("organisation_id")
+    .eq("user_id", user.id)
+    .not("accepted_at", "is", null)
+    .limit(1)
+    .maybeSingle();
+
+  if (!member) redirect("/apply");
+
+  // Use service client to check org status (bypasses RLS)
+  const service = createServiceClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    { auth: { autoRefreshToken: false, persistSession: false } }
+  );
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: orgRow } = await (service as any)
+    .from("organisations")
+    .select("organisation_status, trial_end_date")
+    .eq("id", member.organisation_id)
+    .maybeSingle();
+
+  if (orgRow?.organisation_status === "pending")   redirect("/pending");
+  if (orgRow?.organisation_status === "suspended") redirect("/pending");
+
+  // Non-critical: billing/usage — wrap so a failure never crashes the layout
   try {
-    const { data: member } = await supabase
-      .from("organisation_members")
-      .select("organisation_id")
-      .eq("user_id", user.id)
-      .not("accepted_at", "is", null)
-      .limit(1)
-      .maybeSingle();
-
-    if (!member) redirect("/apply");
-
-    // Use service client to check org status (bypasses RLS)
-    const service = createServiceClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!,
-      { auth: { autoRefreshToken: false, persistSession: false } }
-    );
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data: orgRow } = await (service as any)
-      .from("organisations")
-      .select("organisation_status, trial_end_date")
-      .eq("id", member.organisation_id)
-      .maybeSingle();
-
-    if (orgRow?.organisation_status === "pending")   redirect("/pending");
-    if (orgRow?.organisation_status === "suspended") redirect("/pending");
-
     const { data: brand } = await supabase
       .from("brands")
       .select("id")
@@ -76,9 +79,7 @@ export default async function DashboardLayout({
       }
     }
   } catch (err) {
-    // If any org/billing query fails, render the layout without usage info
-    // rather than crashing every dashboard page.
-    console.error("[DashboardLayout] non-fatal error:", err);
+    console.error("[DashboardLayout] billing query failed:", err);
   }
 
   return (
