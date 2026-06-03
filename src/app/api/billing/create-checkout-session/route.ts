@@ -63,6 +63,16 @@ export async function POST(request: NextRequest) {
   const stripe = getStripe();
 
   try {
+    // Validate stored customer ID — seed/demo data may contain a fake value
+    if (customerId) {
+      try {
+        const existing = await stripe.customers.retrieve(customerId);
+        if ((existing as { deleted?: boolean }).deleted) customerId = null;
+      } catch {
+        customerId = null;
+      }
+    }
+
     if (!customerId) {
       const customer = await stripe.customers.create({
         email: user.email,
