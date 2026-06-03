@@ -103,16 +103,18 @@ export function BillingPageClient({ billing, success, cancelled }: Props) {
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
   const [loadingPortal, setLoadingPortal] = useState(false);
 
-  const { activePassportCount, passportLimit, billingPlan, billingStatus, currentPeriodEnd, trialEndDate, trialDaysRemaining } = billing;
+  const { activePassportCount, passportLimit, billingPlan, billingStatus, billingInterval, currentPeriodEnd, trialEndDate, trialDaysRemaining } = billing;
   const isTrial = billingPlan === "trial";
   const limit = isTrial ? (passportLimit ?? 3) : passportLimit;
   const pct = limit ? Math.min(Math.round((activePassportCount / limit) * 100), 100) : 0;
   const usageMsg = usageMessage(pct);
   const planLabel = PLAN_LABELS[billingPlan] ?? billingPlan;
+  // Use the actual subscription interval from the DB, not the pricing toggle state
+  const activeInterval = billingInterval ?? "monthly";
   const nextInvoiceAmt = billingPlan === "essentials"
-    ? (interval === "monthly" ? "£375" : "£3,750")
+    ? (activeInterval === "monthly" ? "£375" : "£3,750")
     : billingPlan === "growth"
-      ? (interval === "monthly" ? "£795" : "£7,950")
+      ? (activeInterval === "monthly" ? "£795" : "£7,950")
       : null;
 
   async function handleCheckout(plan: "essentials" | "growth") {
@@ -265,7 +267,7 @@ export function BillingPageClient({ billing, success, cancelled }: Props) {
             {billingPlan !== "none" && (
               <div className="text-right shrink-0">
                 <p className="text-[13px] font-semibold text-black">
-                  {billingPlan !== "enterprise" ? (interval === "monthly" ? (billingPlan === "essentials" ? "£375/mo" : "£795/mo") : (billingPlan === "essentials" ? "£3,750/yr" : "£7,950/yr")) : "Custom"}
+                  {billingPlan !== "enterprise" ? (activeInterval === "monthly" ? (billingPlan === "essentials" ? "£375/mo" : "£795/mo") : (billingPlan === "essentials" ? "£3,750/yr" : "£7,950/yr")) : "Custom"}
                 </p>
                 <p className="text-[11px] text-[#8C8C8C] capitalize">{billing.billingInterval ?? ""} billing</p>
               </div>
