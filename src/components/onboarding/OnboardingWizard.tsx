@@ -39,12 +39,27 @@ const steps = [
   { title: "Get started",     description: "How would you like to begin?" },
 ];
 
-export function OnboardingWizard() {
+interface ExistingBrand {
+  name: string;
+  website_url: string | null;
+  logo_url: string | null;
+  sustainability_story: string | null;
+  industry: string | null;
+  product_category: string | null;
+  country: string | null;
+}
+
+interface OnboardingWizardProps {
+  existingBrand?: ExistingBrand | null;
+  hasExistingOrg?: boolean;
+}
+
+export function OnboardingWizard({ existingBrand, hasExistingOrg }: OnboardingWizardProps) {
   const router = useRouter();
   const [currentStep, setCurrentStep] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [logoUploading, setLogoUploading] = useState(false);
-  const [logoPreview, setLogoPreview] = useState<string | null>(null);
+  const [logoPreview, setLogoPreview] = useState<string | null>(existingBrand?.logo_url ?? null);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const {
@@ -57,14 +72,14 @@ export function OnboardingWizard() {
   } = useForm<OnboardingFormData>({
     resolver: zodResolver(onboardingSchema) as Resolver<OnboardingFormData>,
     defaultValues: {
-      organisation_name:    "",
-      brand_name:           "",
-      website_url:          "",
-      industry:             "",
-      product_category:     "",
-      country:              "",
-      logo_url:             "",
-      sustainability_story: "",
+      organisation_name:    existingBrand?.name ?? "",
+      brand_name:           existingBrand?.name ?? "",
+      website_url:          existingBrand?.website_url ?? "",
+      industry:             existingBrand?.industry ?? "",
+      product_category:     existingBrand?.product_category ?? "",
+      country:              existingBrand?.country ?? "",
+      logo_url:             existingBrand?.logo_url ?? "",
+      sustainability_story: existingBrand?.sustainability_story ?? "",
       default_theme:        "origins_standard",
       onboarding_method:    "manual",
     },
@@ -113,7 +128,7 @@ export function OnboardingWizard() {
       const res = await fetch("/api/onboarding", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
+        body: JSON.stringify({ ...data, has_existing_org: hasExistingOrg }),
       });
       const result = await res.json();
       if (!res.ok) throw new Error(result.error ?? "Something went wrong");

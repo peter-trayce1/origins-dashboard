@@ -43,6 +43,7 @@ export default async function DashboardLayout({
     // rather than crashing the entire layout with a 500.
     let orgStatus: string | null = null;
     let trialEndDate: string | null = null;
+    let onboardingCompleted = false;
 
     try {
       const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -55,12 +56,13 @@ export default async function DashboardLayout({
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const { data: orgRow } = await (service as any)
           .from("organisations")
-          .select("organisation_status, trial_end_date")
+          .select("organisation_status, trial_end_date, onboarding_completed")
           .eq("id", member.organisation_id)
           .maybeSingle();
 
         orgStatus = (orgRow?.organisation_status as string) ?? null;
         trialEndDate = (orgRow?.trial_end_date as string) ?? null;
+        onboardingCompleted = (orgRow?.onboarding_completed as boolean) ?? false;
       }
     } catch (err) {
       console.error("[DashboardLayout] org status check failed:", err);
@@ -68,6 +70,9 @@ export default async function DashboardLayout({
 
     if (orgStatus === "pending")   redirect("/pending");
     if (orgStatus === "suspended") redirect("/pending");
+
+    // Route approved users through brand setup wizard on first login
+    if (orgStatus === "approved" && !onboardingCompleted) redirect("/onboarding");
 
     // Start the 14-day trial on first login if not yet started
     if (orgStatus === "approved") {
