@@ -106,7 +106,28 @@ export async function DELETE(request: Request) {
     if (!otherMemberships?.length) usersToDelete.push(uid);
   }
 
-  // Delete orgs (cascade handles brands, passports, members, QR codes, etc.)
+  // Collect brand and passport IDs so we can delete FK-constrained tables first.
+  const { data: brands } = await db.from("brands").select("id").in("organisation_id", orgIds);
+  const brandIds = (brands ?? []).map((b) => b.id);
+
+  if (brandIds.length > 0) {
+    const { data: passports } = await db.from("passports").select("id").in("brand_id", brandIds);
+    const passportIds = (passports ?? []).map((p) => p.id);
+
+    // Delete tables that reference brand_id or passport_id without CASCADE
+    if (passportIds.length > 0) {
+      await db.from("scans").delete().in("passport_id", passportIds);
+    }
+    await db.from("scans").delete().in("brand_id", brandIds);
+    await db.from("qr_codes").delete().in("brand_id", brandIds);
+    await db.from("ai_generation_logs").delete().in("brand_id", brandIds);
+    await db.from("files").delete().in("brand_id", brandIds);
+    await db.from("data_connections").delete().in("brand_id", brandIds);
+  }
+
+  await db.from("audit_logs").delete().in("organisation_id", orgIds);
+
+  // Now delete the orgs — cascade handles brands, passports, members, etc.
   const { error: orgError } = await db.from("organisations").delete().in("id", orgIds);
   if (orgError) return NextResponse.json({ error: orgError.message }, { status: 500 });
 
