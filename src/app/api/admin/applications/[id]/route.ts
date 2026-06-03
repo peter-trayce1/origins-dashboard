@@ -4,6 +4,14 @@ import { createClient as createServiceClient } from "@supabase/supabase-js";
 import { sendWorkspaceApproved } from "@/lib/email";
 import { isSuperAdmin } from "@/lib/super-admin";
 
+function generateTempPassword(): string {
+  // 14-char alphanumeric — no ambiguous chars (0/O, 1/l/I)
+  const chars = "ABCDEFGHJKMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789";
+  const bytes = new Uint8Array(14);
+  crypto.getRandomValues(bytes);
+  return Array.from(bytes, (b) => chars[b % chars.length]).join("");
+}
+
 function isAdminEmail(email: string): boolean {
   const adminEmails = (process.env.ADMIN_EMAILS ?? "").split(",").map((e) => e.trim().toLowerCase());
   return adminEmails.some((e) => e && e === email.toLowerCase());
@@ -34,8 +42,7 @@ export async function POST(
   );
 
   if (action === "approve") {
-    // Trial dates are intentionally left null here — the 14-day clock starts
-    // the first time the customer logs in and reaches the dashboard.
+    // Trial dates left null — clock starts on first dashboard login.
     const { data: org, error } = await serviceSupabase
       .from("organisations")
       .update({
@@ -53,7 +60,7 @@ export async function POST(
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-    // Send approval email
+    // Generate a temporary password, set it on the account, and email it.
     const { data: members } = await serviceSupabase
       .from("organisation_members")
       .select("user_id")
@@ -63,11 +70,23 @@ export async function POST(
     if (members?.[0]?.user_id) {
       const { data: authUser } = await serviceSupabase.auth.admin.getUserById(members[0].user_id);
       if (authUser?.user?.email) {
+        const tempPassword = generateTempPassword();
+
+        // Set the temporary password and keep the must_change_password flag
+        await serviceSupabase.auth.admin.updateUserById(members[0].user_id, {
+          password:      tempPassword,
+          user_metadata: {
+            ...authUser.user.user_metadata,
+            must_change_password: true,
+          },
+        });
+
         sendWorkspaceApproved({
           to:           authUser.user.email,
           fullName:     authUser.user.user_metadata?.full_name ?? "",
           brandName:    org.name,
-          trialEndDate: "14 days from your first sign-in",
+          tempPassword,
+          loginUrl:     `${process.env.NEXT_PUBLIC_APP_URL ?? "https://app.origins-id.com"}/login`,
         }).catch(console.error);
       }
     }

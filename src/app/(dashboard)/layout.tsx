@@ -15,6 +15,9 @@ export default async function DashboardLayout({
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
+  // Force password reset before anything else
+  if (user.user_metadata?.must_change_password === true) redirect("/set-password");
+
   let usageInfo: {
     used: number;
     limit: number | null;

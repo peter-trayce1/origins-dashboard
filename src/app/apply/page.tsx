@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Check, ChevronDown, Loader2, Eye, EyeOff } from "lucide-react";
+import { Check, ChevronDown, Loader2 } from "lucide-react";
 
 // ── Countries ─────────────────────────────────────────────────────────────────
 
@@ -206,12 +206,10 @@ export default function ApplyPage() {
   const [submitting, setSubmitting]   = useState(false);
   const [submitted, setSubmitted]     = useState<Record<string, string> | null>(null);
   const [globalError, setGlobalError] = useState("");
-  const [showPass, setShowPass]       = useState(false);
 
   // Section 1
   const [fullName,  setFullName]  = useState("");
   const [email,     setEmail]     = useState("");
-  const [password,  setPassword]  = useState("");
   const [jobTitle,  setJobTitle]  = useState("");
 
   // Section 2
@@ -231,8 +229,6 @@ export default function ApplyPage() {
     if (!fullName.trim())          e.fullName  = "Required";
     if (!email.trim())             e.email     = "Required";
     else if (!/\S+@\S+\.\S+/.test(email)) e.email = "Enter a valid email address";
-    if (!password)                 e.password  = "Required";
-    else if (password.length < 8)  e.password  = "At least 8 characters";
     if (!brandName.trim())         e.brandName = "Required";
     if (!website.trim())           e.website   = "Required";
     if (!country)                  e.country   = "Required";
@@ -255,7 +251,6 @@ export default function ApplyPage() {
         body: JSON.stringify({
           full_name: fullName,
           email,
-          password,
           job_title: jobTitle || undefined,
           brand_name: brandName,
           website,
@@ -406,40 +401,14 @@ export default function ApplyPage() {
                 />
               </Field>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <Field label="Password" error={errors.password}>
-                <div className="relative">
-                  <input
-                    type={showPass ? "text" : "password"}
-                    placeholder="Min. 8 characters"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    autoComplete="new-password"
-                    className={`w-full h-11 px-3.5 pr-11 rounded-xl border text-sm outline-none transition-colors placeholder:text-[#BDBDBB] ${
-                      errors.password
-                        ? "border-red-300 bg-red-50"
-                        : "border-[#E8E8E6] bg-white focus:border-black hover:border-[#C8C8C6]"
-                    }`}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPass((s) => !s)}
-                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#8C8C8C] hover:text-black transition-colors"
-                  >
-                    {showPass ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                  </button>
-                </div>
-                {errors.password && <p className="text-xs text-red-600">{errors.password}</p>}
-              </Field>
-              <Field label="Job title" optional>
-                <TextInput
-                  placeholder="e.g. Sustainability Manager"
-                  value={jobTitle}
-                  onChange={setJobTitle}
-                  autoComplete="organization-title"
-                />
-              </Field>
-            </div>
+            <Field label="Job title" optional>
+              <TextInput
+                placeholder="e.g. Sustainability Manager"
+                value={jobTitle}
+                onChange={setJobTitle}
+                autoComplete="organization-title"
+              />
+            </Field>
           </Section>
 
           {/* Section 2 — About your brand */}

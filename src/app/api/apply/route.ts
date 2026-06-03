@@ -35,7 +35,6 @@ export async function POST(request: NextRequest) {
   const {
     full_name,
     email,
-    password,
     job_title,
     brand_name,
     website,
@@ -45,19 +44,16 @@ export async function POST(request: NextRequest) {
   } = body;
 
   // Basic server-side validation
-  if (!full_name || !email || !password || !brand_name || !website || !country) {
+  if (!full_name || !email || !brand_name || !website || !country) {
     return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
   }
-  if (password.length < 8) {
-    return NextResponse.json({ error: "Password must be at least 8 characters" }, { status: 400 });
-  }
 
-  // 1. Create auth user
+  // 1. Create auth user — no password yet. A temporary password is set when
+  //    the workspace is approved and emailed to the applicant.
   const { data: authData, error: authError } = await supabase.auth.admin.createUser({
     email,
-    password,
     email_confirm: true,
-    user_metadata: { full_name },
+    user_metadata: { full_name, must_change_password: true },
   });
 
   if (authError) {
