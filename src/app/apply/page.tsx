@@ -365,7 +365,7 @@ export default function ApplyPage() {
           <Image src="/logo-dark.png" alt="Origins" width={110} height={24} style={{ height: 24, width: "auto" }} priority />
           <span className="text-[13px] text-[#8C8C8C]">
             Already have an account?{" "}
-            <Link href="/login" className="text-black font-medium hover:underline">Sign in</Link>
+            <Link href="/dashboard" className="text-black font-medium hover:underline">Sign in</Link>
           </span>
         </div>
 
