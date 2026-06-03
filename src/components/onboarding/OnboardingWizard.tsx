@@ -138,7 +138,7 @@ export function OnboardingWizard({ existingBrand, hasExistingOrg }: OnboardingWi
       if (data.onboarding_method === "csv") {
         router.push("/bulk-upload");
       } else {
-        router.push("/passports/new");
+        router.push("/passports");
       }
       router.refresh();
     } catch (err) {
