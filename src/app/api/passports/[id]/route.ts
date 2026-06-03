@@ -88,12 +88,11 @@ export async function PATCH(
       passport_material_extras, claim_evidence_urls,
       ...passportData } = body;
 
-    // Use the service client for all writes — the user's ownership is already
-    // confirmed above (only their own passports pass RLS on the initial update).
-    // This avoids silent failures when the anon-key RLS check races or caches stale state.
+    // Main passport update uses the typed anon client (RLS confirms ownership).
+    // Related table writes use the service client to bypass RLS and surface errors.
     const svc = service();
 
-    const { data: passport, error } = await svc
+    const { data: passport, error } = await supabase
       .from("passports")
       .update({ ...passportData, updated_at: new Date().toISOString() })
       .eq("id", id)
@@ -259,7 +258,7 @@ export async function PATCH(
       }
     }
 
-    const { data: fullPassport } = await svc
+    const { data: fullPassport } = await supabase
       .from("passports")
       .select(`
         *,
@@ -274,7 +273,7 @@ export async function PATCH(
 
     if (fullPassport) {
       const completeness = calculateCompleteness(fullPassport as unknown as Parameters<typeof calculateCompleteness>[0]);
-      await svc
+      await supabase
         .from("passports")
         .update({
           completeness_score: completeness.score,
