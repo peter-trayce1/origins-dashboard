@@ -31,8 +31,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const publicPassportUrl = process.env.NEXT_PUBLIC_PUBLIC_PASSPORT_URL ?? "";
-  const targetUrl = `${publicPassportUrl}/c/${passport.passport_code}`;
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "";
+  const targetUrl = `${appUrl}/c/${passport.passport_code}`;
 
   const { data: qr, error } = await supabase
     .from("qr_codes")
