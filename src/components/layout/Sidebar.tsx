@@ -15,6 +15,7 @@ import {
   CreditCard,
   Timer,
   Zap,
+  Shield,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useOrganisation } from "@/hooks/useOrganisation";
@@ -44,9 +45,10 @@ interface UsageInfo {
 
 interface SidebarProps {
   usageInfo?: UsageInfo | null;
+  isSuperAdmin?: boolean;
 }
 
-export function Sidebar({ usageInfo }: SidebarProps) {
+export function Sidebar({ usageInfo, isSuperAdmin }: SidebarProps) {
   const pathname = usePathname();
   const { org } = useOrganisation();
 
@@ -103,6 +105,25 @@ export function Sidebar({ usageInfo }: SidebarProps) {
             </Link>
           );
         })}
+
+        {/* Super-admin only */}
+        {isSuperAdmin && (
+          <>
+            <div className="my-2 h-px bg-[#E8E8E6]" />
+            <Link
+              href="/customer-management"
+              className={cn(
+                "flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[13px] font-medium transition-colors",
+                pathname.startsWith("/customer-management")
+                  ? "bg-white text-black shadow-[0_1px_3px_0_rgb(0_0_0/0.06)] border border-[#E8E8E6]"
+                  : "text-[#525252] hover:text-black hover:bg-white/60"
+              )}
+            >
+              <Shield className={cn("h-4 w-4 shrink-0", pathname.startsWith("/customer-management") ? "text-black" : "text-[#8C8C8C]")} />
+              Customer Management
+            </Link>
+          </>
+        )}
       </nav>
 
       {/* Trial / Passport allowance card */}
