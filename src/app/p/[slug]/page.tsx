@@ -1,13 +1,21 @@
 import { notFound } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { createClient } from "@supabase/supabase-js";
 import { PublicPassportPage } from "@/components/public-passport/PublicPassportPage";
 import type { PassportWithRelations } from "@/types/passport";
 import type { Metadata } from "next";
 
 export const revalidate = 60;
 
+function getServiceClient() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    { auth: { autoRefreshToken: false, persistSession: false } }
+  );
+}
+
 async function getPassport(slug: string) {
-  const supabase = await createClient();
+  const supabase = getServiceClient();
   const { data, error } = await supabase
     .from("passports")
     .select(`
@@ -70,7 +78,7 @@ export default async function PublicPassportSlugPage({
   if (!passport) notFound();
 
   // Record scan server-side (non-blocking). scan_count is maintained by DB trigger.
-  const supabase = await createClient();
+  const supabase = getServiceClient();
   supabase.from("scans").insert({
     passport_id: passport.id,
     brand_id: passport.brand_id,
