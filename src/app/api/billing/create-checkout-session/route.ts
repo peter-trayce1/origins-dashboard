@@ -73,10 +73,12 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    const orgName = (org?.name as string) ?? undefined;
+
     if (!customerId) {
       const customer = await stripe.customers.create({
         email: user.email,
-        name: (org?.name as string) ?? undefined,
+        name: orgName,
         metadata: { organisation_id: member.organisation_id },
       });
       customerId = customer.id;
@@ -94,10 +96,13 @@ export async function POST(request: NextRequest) {
     const session = await stripe.checkout.sessions.create({
       mode: "subscription",
       customer: customerId,
+      customer_update: { name: "auto", address: "auto" },
       line_items: [{ price: priceId, quantity: 1 }],
       success_url: `${appUrl}/billing?success=true&plan=${plan}`,
       cancel_url: `${appUrl}/billing?cancelled=true`,
       allow_promotion_codes: true,
+      billing_address_collection: "required",
+      tax_id_collection: { enabled: true },
       subscription_data: {
         metadata: { organisation_id: member.organisation_id, plan, interval },
       },
