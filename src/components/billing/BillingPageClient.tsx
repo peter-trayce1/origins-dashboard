@@ -129,8 +129,8 @@ export function BillingPageClient({ billing, success, cancelled }: Props) {
         return;
       }
       window.location.href = data.url;
-    } catch {
-      toast.error("Something went wrong. Please try again.");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Something went wrong. Please try again.");
     } finally {
       setLoadingPlan(null);
     }

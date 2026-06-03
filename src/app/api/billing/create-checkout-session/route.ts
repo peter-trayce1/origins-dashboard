@@ -62,35 +62,41 @@ export async function POST(request: NextRequest) {
 
   const stripe = getStripe();
 
-  if (!customerId) {
-    const customer = await stripe.customers.create({
-      email: user.email,
-      name: (org?.name as string) ?? undefined,
-      metadata: { organisation_id: member.organisation_id },
+  try {
+    if (!customerId) {
+      const customer = await stripe.customers.create({
+        email: user.email,
+        name: (org?.name as string) ?? undefined,
+        metadata: { organisation_id: member.organisation_id },
+      });
+      customerId = customer.id;
+
+      // Persist customer ID immediately
+      await (supabase as unknown as {
+        from: (t: string) => { update: (d: object) => { eq: (k: string, v: string) => Promise<unknown> } };
+      }).from("organisations")
+        .update({ stripe_customer_id: customerId })
+        .eq("id", member.organisation_id);
+    }
+
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+
+    const session = await stripe.checkout.sessions.create({
+      mode: "subscription",
+      customer: customerId,
+      line_items: [{ price: priceId, quantity: 1 }],
+      success_url: `${appUrl}/billing?success=true&plan=${plan}`,
+      cancel_url: `${appUrl}/billing?cancelled=true`,
+      allow_promotion_codes: true,
+      subscription_data: {
+        metadata: { organisation_id: member.organisation_id, plan, interval },
+      },
     });
-    customerId = customer.id;
 
-    // Persist customer ID immediately
-    await (supabase as unknown as {
-      from: (t: string) => { update: (d: object) => { eq: (k: string, v: string) => Promise<unknown> } };
-    }).from("organisations")
-      .update({ stripe_customer_id: customerId })
-      .eq("id", member.organisation_id);
+    return NextResponse.json({ url: session.url });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Stripe error";
+    console.error("[checkout]", message);
+    return NextResponse.json({ error: message }, { status: 500 });
   }
-
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
-
-  const session = await stripe.checkout.sessions.create({
-    mode: "subscription",
-    customer: customerId,
-    line_items: [{ price: priceId, quantity: 1 }],
-    success_url: `${appUrl}/billing?success=true&plan=${plan}`,
-    cancel_url: `${appUrl}/billing?cancelled=true`,
-    allow_promotion_codes: true,
-    subscription_data: {
-      metadata: { organisation_id: member.organisation_id, plan, interval },
-    },
-  });
-
-  return NextResponse.json({ url: session.url });
 }
