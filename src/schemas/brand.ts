@@ -1,15 +1,16 @@
 import { z } from "zod";
 
 export const onboardingSchema = z.object({
-  organisation_name: z.string().min(2, "Organisation name is required"),
-  brand_name: z.string().min(2, "Brand name is required"),
-  website_url: z.string().url("Please enter a valid URL").optional().or(z.literal("")),
-  industry: z.string().min(1, "Please select an industry"),
-  product_category: z.string().min(1, "Please select a product category"),
-  country: z.string().min(1, "Please select a country"),
-  logo_url: z.string().optional(),
-  default_theme: z.string().default("origins_standard"),
-  onboarding_method: z.enum(["manual", "csv", "integration"]).default("manual"),
+  organisation_name:   z.string().min(2, "Organisation name is required"),
+  brand_name:          z.string().min(2, "Brand name is required"),
+  website_url:         z.string().url("Please enter a valid URL").optional().or(z.literal("")),
+  industry:            z.string().min(1, "Please select an industry"),
+  product_category:    z.string().min(1, "Please select a product category"),
+  country:             z.string().min(1, "Please select a country"),
+  logo_url:            z.string().optional(),
+  sustainability_story: z.string().optional(),
+  default_theme:       z.string().default("origins_standard"),
+  onboarding_method:   z.enum(["manual", "csv", "integration"]).default("manual"),
 });
 
 export const brandSettingsSchema = z.object({

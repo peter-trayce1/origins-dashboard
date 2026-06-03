@@ -24,16 +24,24 @@ export async function POST(request: NextRequest) {
   );
 
   const body = await request.json();
-  const { organisation_name, brand_name, website_url, industry, product_category, country, default_theme } = body;
+  const { organisation_name, brand_name, website_url, industry, product_category, country, default_theme, logo_url, sustainability_story } = body;
 
   if (!organisation_name?.trim() || !brand_name?.trim()) {
     return NextResponse.json({ error: "organisation_name and brand_name are required" }, { status: 400 });
   }
 
   const orgSlug = makeSlug(organisation_name) + "-" + Date.now().toString(36);
-  const { data: org, error: orgError } = await service
-    .from("organisations")
-    .insert({ name: organisation_name.trim(), slug: orgSlug })
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: org, error: orgError } = await (service.from("organisations") as any)
+    .insert({
+      name:                organisation_name.trim(),
+      slug:                orgSlug,
+      // Auto-approve with a trial — dates set on first dashboard load
+      organisation_status: "approved",
+      billing_plan:        "trial",
+      billing_status:      "trialing",
+      passport_limit:      3,
+    })
     .select()
     .single();
 
@@ -58,14 +66,16 @@ export async function POST(request: NextRequest) {
   const { data: brand, error: brandError } = await service
     .from("brands")
     .insert({
-      organisation_id: org.id,
-      name: brand_name.trim(),
-      slug: brandSlug,
-      website_url: website_url?.trim() || null,
-      industry: industry || null,
-      product_category: product_category || null,
-      country: country || null,
-      default_theme: default_theme || "origins_standard",
+      organisation_id:     org.id,
+      name:                brand_name.trim(),
+      slug:                brandSlug,
+      website_url:         website_url?.trim() || null,
+      industry:            industry || null,
+      product_category:    product_category || null,
+      country:             country || null,
+      default_theme:       default_theme || "origins_standard",
+      logo_url:            logo_url || null,
+      sustainability_story: sustainability_story?.trim() || null,
     })
     .select()
     .single();
