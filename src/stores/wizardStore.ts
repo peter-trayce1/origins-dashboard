@@ -195,7 +195,7 @@ export const useWizardStore = create<WizardStore>((set) => ({
         product_url: (p.product_url as string) ?? "",
         primary_image_url: (p.primary_image_url as string) ?? "",
         additional_image_urls: (p.additional_image_urls as string[]) ?? [],
-        manufacturing_date: (p.manufacturing_date as string) ?? "",
+        manufacturing_date: ((p.manufacturing_date as string) ?? "").slice(0, 7),
         slug: (p.slug as string) ?? "",
         country_of_origin: (p.country_of_origin as string) ?? "",
         product_weight_g: (p.product_weight_g as number) ?? "",
