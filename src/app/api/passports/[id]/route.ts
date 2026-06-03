@@ -1,23 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { createClient as createServiceClient } from "@supabase/supabase-js";
 import { calculateCompleteness } from "@/lib/completeness";
 import { makeUniqueSlug } from "@/lib/slugify";
 import type { Json } from "@/lib/supabase/types";
-
-function service() {
-  return createServiceClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    { auth: { autoRefreshToken: false, persistSession: false } }
-  );
-}
-
-async function logError(context: string, error: unknown) {
-  if (error && typeof error === "object" && "message" in error) {
-    console.error(`[passport PATCH] ${context}:`, (error as { message: string }).message);
-  }
-}
 
 export async function GET(
   _request: NextRequest,
@@ -88,10 +73,6 @@ export async function PATCH(
       passport_material_extras, claim_evidence_urls,
       ...passportData } = body;
 
-    // Main passport update uses the typed anon client (RLS confirms ownership).
-    // Related table writes use the service client to bypass RLS and surface errors.
-    const svc = service();
-
     const { data: passport, error } = await supabase
       .from("passports")
       .update({ ...passportData, updated_at: new Date().toISOString() })
@@ -106,16 +87,18 @@ export async function PATCH(
 
     // Save claim_evidence_urls separately — its column type must be jsonb (not jsonb[])
     if (claim_evidence_urls !== undefined) {
-      const { error: e } = await svc.from("passports").update({ claim_evidence_urls }).eq("id", id);
-      if (e) await logError("claim_evidence_urls", e);
+      const { error: e } = await supabase
+        .from("passports")
+        .update({ claim_evidence_urls })
+        .eq("id", id);
+      if (e) console.error("[passport PATCH] claim_evidence_urls:", e.message);
     }
 
     if (product_materials !== undefined) {
-      const { error: de } = await svc.from("product_materials").delete().eq("passport_id", id);
-      if (de) await logError("product_materials delete", de);
+      await supabase.from("product_materials").delete().eq("passport_id", id);
       if (product_materials.length > 0) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const { error: ie } = await (svc.from("product_materials") as any).insert(
+        const { error: e } = await (supabase.from("product_materials") as any).insert(
           product_materials.map((m: Record<string, unknown>, idx: number) => ({
             passport_id: id,
             sort_order: idx,
@@ -129,16 +112,15 @@ export async function PATCH(
             confidence_level: (m.confidence_level as string) || "brand_declared",
           }))
         );
-        if (ie) await logError("product_materials insert", ie);
+        if (e) console.error("[passport PATCH] product_materials insert:", e.message);
       }
     }
 
     if (product_facilities !== undefined) {
-      const { error: de } = await svc.from("product_facilities").delete().eq("passport_id", id);
-      if (de) await logError("product_facilities delete", de);
+      await supabase.from("product_facilities").delete().eq("passport_id", id);
       if (product_facilities.length > 0) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const { error: ie } = await (svc.from("product_facilities") as any).insert(
+        const { error: e } = await (supabase.from("product_facilities") as any).insert(
           product_facilities.map((f: Record<string, unknown>, idx: number) => ({
             passport_id: id,
             sort_order: idx,
@@ -154,15 +136,14 @@ export async function PATCH(
             confidence_level: (f.confidence_level as string) || "brand_declared",
           }))
         );
-        if (ie) await logError("product_facilities insert", ie);
+        if (e) console.error("[passport PATCH] product_facilities insert:", e.message);
       }
     }
 
     if (product_certifications !== undefined) {
-      const { error: de } = await svc.from("product_certifications").delete().eq("passport_id", id);
-      if (de) await logError("product_certifications delete", de);
+      await supabase.from("product_certifications").delete().eq("passport_id", id);
       if (product_certifications.length > 0) {
-        const { error: ie } = await svc.from("product_certifications").insert(
+        const { error: e } = await supabase.from("product_certifications").insert(
           product_certifications.map((c: Record<string, unknown>) => ({
             passport_id: id,
             certification_id: (c.certification_id as string) || null,
@@ -177,15 +158,14 @@ export async function PATCH(
             confidence_level: (c.confidence_level as string) || "brand_declared",
           }))
         );
-        if (ie) await logError("product_certifications insert", ie);
+        if (e) console.error("[passport PATCH] product_certifications insert:", e.message);
       }
     }
 
     if (care_instructions !== undefined) {
-      const { error: de } = await svc.from("care_instructions").delete().eq("passport_id", id);
-      if (de) await logError("care_instructions delete", de);
+      await supabase.from("care_instructions").delete().eq("passport_id", id);
       if (care_instructions.length > 0) {
-        const { error: ie } = await svc.from("care_instructions").insert(
+        const { error: e } = await supabase.from("care_instructions").insert(
           care_instructions.map((c: Record<string, unknown>, idx: number) => ({
             passport_id: id,
             sort_order: idx,
@@ -194,15 +174,14 @@ export async function PATCH(
             icon_code: (c.icon_code as string) || null,
           }))
         );
-        if (ie) await logError("care_instructions insert", ie);
+        if (e) console.error("[passport PATCH] care_instructions insert:", e.message);
       }
     }
 
     if (circularity_actions !== undefined) {
-      const { error: de } = await svc.from("circularity_actions").delete().eq("passport_id", id);
-      if (de) await logError("circularity_actions delete", de);
+      await supabase.from("circularity_actions").delete().eq("passport_id", id);
       if (circularity_actions.length > 0) {
-        const { error: ie } = await svc.from("circularity_actions").insert(
+        const { error: e } = await supabase.from("circularity_actions").insert(
           circularity_actions.map((a: Record<string, unknown>, idx: number) => ({
             passport_id: id,
             sort_order: idx,
@@ -212,27 +191,25 @@ export async function PATCH(
             url: (a.url as string) || null,
           }))
         );
-        if (ie) await logError("circularity_actions insert", ie);
+        if (e) console.error("[passport PATCH] circularity_actions insert:", e.message);
       }
     }
 
     if (passport_material_extras !== undefined) {
-      const { error: de } = await svc.from("passport_material_extras").delete().eq("passport_id", id);
-      if (de) await logError("passport_material_extras delete", de);
+      await supabase.from("passport_material_extras").delete().eq("passport_id", id);
       if (Object.keys(passport_material_extras).length > 0) {
-        const { error: ie } = await svc.from("passport_material_extras").insert({
+        const { error: e } = await supabase.from("passport_material_extras").insert({
           ...passport_material_extras,
           passport_id: id,
         });
-        if (ie) await logError("passport_material_extras insert", ie);
+        if (e) console.error("[passport PATCH] passport_material_extras insert:", e.message);
       }
     }
 
     if (impact_metrics !== undefined) {
-      const { error: de } = await svc.from("impact_metrics").delete().eq("passport_id", id);
-      if (de) await logError("impact_metrics delete", de);
+      await supabase.from("impact_metrics").delete().eq("passport_id", id);
       if (impact_metrics.length > 0) {
-        const { error: ie } = await svc.from("impact_metrics").insert(
+        const { error: e } = await supabase.from("impact_metrics").insert(
           impact_metrics.map((m: Record<string, unknown>, idx: number) => ({
             passport_id: id,
             metric_key: (m.metric_key as string) || `metric_${idx}`,
@@ -254,7 +231,7 @@ export async function PATCH(
             confidence_level: (m.confidence_level as string) || "brand_declared",
           }))
         );
-        if (ie) await logError("impact_metrics insert", ie);
+        if (e) console.error("[passport PATCH] impact_metrics insert:", e.message);
       }
     }
 
