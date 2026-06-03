@@ -66,6 +66,7 @@ export function OnboardingWizard({ existingBrand, hasExistingOrg }: OnboardingWi
     register,
     handleSubmit,
     setValue,
+    getValues,
     watch,
     trigger,
     formState: { errors },
@@ -89,6 +90,13 @@ export function OnboardingWizard({ existingBrand, hasExistingOrg }: OnboardingWi
   const productCategory  = watch("product_category");
   const country          = watch("country");
   const onboardingMethod = watch("onboarding_method");
+
+  // On the final step we skip handleSubmit's full re-validation (per-step
+  // trigger already validated each section) and call onSubmit directly.
+  async function handleGetStarted() {
+    if (isSubmitting) return;
+    await onSubmit(getValues());
+  }
 
   async function handleLogoFile(file: File) {
     setLogoUploading(true);
@@ -352,7 +360,7 @@ export function OnboardingWizard({ existingBrand, hasExistingOrg }: OnboardingWi
                   Continue <ChevronRight className="h-4 w-4 ml-1" />
                 </Button>
               ) : (
-                <Button type="submit" disabled={isSubmitting}>
+                <Button type="button" onClick={handleGetStarted} disabled={isSubmitting}>
                   {isSubmitting ? (
                     <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Setting up…</>
                   ) : (
