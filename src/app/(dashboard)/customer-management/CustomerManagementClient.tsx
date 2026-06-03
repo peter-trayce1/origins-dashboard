@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import {
   Building2, Users, FileText, QrCode, TrendingUp, Clock,
   CheckCircle2, XCircle, PauseCircle, RefreshCw, Loader2,
-  ChevronRight, ExternalLink, Search, Shield,
+  ChevronRight, ExternalLink, Search, Shield, Trash2, AlertTriangle,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -319,10 +319,13 @@ function ApplicationsTab() {
 // ── Accounts Tab ──────────────────────────────────────────────────────────────
 
 function AccountsTab() {
-  const [accounts, setAccounts] = useState<Account[]>([]);
-  const [loading, setLoading]   = useState(true);
-  const [search, setSearch]     = useState("");
+  const [accounts, setAccounts]     = useState<Account[]>([]);
+  const [loading, setLoading]       = useState(true);
+  const [search, setSearch]         = useState("");
   const [planFilter, setPlanFilter] = useState("all");
+  const [selected, setSelected]     = useState<Set<string>>(new Set());
+  const [confirming, setConfirming] = useState(false);
+  const [deleting, setDeleting]     = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -330,6 +333,8 @@ function AccountsTab() {
       const res = await fetch("/api/admin/accounts");
       if (!res.ok) { toast.error("Failed to load accounts"); return; }
       setAccounts(await res.json());
+      setSelected(new Set());
+      setConfirming(false);
     } finally { setLoading(false); }
   }, []);
 
@@ -341,6 +346,46 @@ function AccountsTab() {
     .filter((a) => planFilter === "all" || a.billing_plan === planFilter)
     .filter((a) => !search || [a.name, a.owner_email, a.slug]
       .some((s) => s?.toLowerCase().includes(search.toLowerCase())));
+
+  const allSelected = filtered.length > 0 && filtered.every((a) => selected.has(a.id));
+  const someSelected = selected.size > 0;
+
+  function toggleAll() {
+    if (allSelected) {
+      setSelected(new Set());
+    } else {
+      setSelected(new Set(filtered.map((a) => a.id)));
+    }
+  }
+
+  function toggleOne(id: string) {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  }
+
+  async function handleDelete() {
+    setDeleting(true);
+    try {
+      const res = await fetch("/api/admin/accounts", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ orgIds: [...selected] }),
+      });
+      const data = await res.json();
+      if (!res.ok) { toast.error(data.error ?? "Delete failed"); return; }
+      toast.success(`Deleted ${data.deleted} account${data.deleted !== 1 ? "s" : ""}`);
+      await load();
+    } finally {
+      setDeleting(false);
+    }
+  }
+
+  const selectedNames = accounts
+    .filter((a) => selected.has(a.id))
+    .map((a) => a.name);
 
   return (
     <div className="space-y-4">
@@ -362,13 +407,63 @@ function AccountsTab() {
           className="h-9 px-3 rounded-xl border border-[#E8E8E6] text-[12px] text-[#525252] hover:bg-white flex items-center gap-1.5 disabled:opacity-50">
           <RefreshCw className={`h-3 w-3 ${loading ? "animate-spin" : ""}`} /> Refresh
         </button>
+
+        {someSelected && !confirming && (
+          <button
+            onClick={() => setConfirming(true)}
+            className="h-9 px-3 rounded-xl bg-red-50 border border-red-200 text-[12px] font-medium text-red-700 hover:bg-red-100 flex items-center gap-1.5 transition-colors"
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+            Delete {selected.size} selected
+          </button>
+        )}
       </div>
+
+      {/* Confirmation banner */}
+      {confirming && (
+        <div className="flex items-start gap-3 bg-red-50 border border-red-200 rounded-2xl px-5 py-4">
+          <AlertTriangle className="h-4 w-4 text-red-600 shrink-0 mt-0.5" />
+          <div className="flex-1 min-w-0">
+            <p className="text-[13px] font-semibold text-red-800 mb-0.5">
+              Permanently delete {selected.size} account{selected.size !== 1 ? "s" : ""}?
+            </p>
+            <p className="text-[12px] text-red-700 mb-1">
+              This will delete <strong>{selectedNames.join(", ")}</strong> and all associated passports, QR codes, and user accounts. This cannot be undone.
+            </p>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              onClick={() => setConfirming(false)}
+              disabled={deleting}
+              className="h-8 px-3 rounded-lg border border-red-200 text-[12px] font-medium text-red-700 hover:bg-red-100 transition-colors disabled:opacity-50"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleDelete}
+              disabled={deleting}
+              className="h-8 px-3 rounded-lg bg-red-600 text-white text-[12px] font-medium hover:bg-red-700 flex items-center gap-1.5 transition-colors disabled:opacity-50"
+            >
+              {deleting ? <Loader2 className="h-3 w-3 animate-spin" /> : <Trash2 className="h-3 w-3" />}
+              {deleting ? "Deleting…" : "Yes, delete"}
+            </button>
+          </div>
+        </div>
+      )}
 
       {loading ? <Spinner /> : filtered.length === 0 ? <Empty text="No accounts match" /> : (
         <div className="border border-[#E8E8E6] rounded-2xl bg-white overflow-x-auto">
           <table className="w-full text-left min-w-[900px]">
             <thead>
               <tr className="border-b border-[#E8E8E6]">
+                <th className="pl-5 py-3.5 w-10">
+                  <input
+                    type="checkbox"
+                    checked={allSelected}
+                    onChange={toggleAll}
+                    className="h-3.5 w-3.5 rounded border-[#D0D0CE] accent-black cursor-pointer"
+                  />
+                </th>
                 {["Organisation", "Owner", "Plan", "Status", "Users", "Passports", "Allowance", "Created"].map((h) => (
                   <th key={h} className="text-[11px] font-semibold text-[#8C8C8C] uppercase tracking-wide px-5 py-3.5">{h}</th>
                 ))}
@@ -376,7 +471,16 @@ function AccountsTab() {
             </thead>
             <tbody className="divide-y divide-[#F4F4F3]">
               {filtered.map((acc) => (
-                <tr key={acc.id} className="hover:bg-[#FAFAF9] transition-colors">
+                <tr key={acc.id}
+                  className={`transition-colors ${selected.has(acc.id) ? "bg-red-50/40" : "hover:bg-[#FAFAF9]"}`}>
+                  <td className="pl-5 py-4">
+                    <input
+                      type="checkbox"
+                      checked={selected.has(acc.id)}
+                      onChange={() => toggleOne(acc.id)}
+                      className="h-3.5 w-3.5 rounded border-[#D0D0CE] accent-black cursor-pointer"
+                    />
+                  </td>
                   <td className="px-5 py-4">
                     <p className="text-[13px] font-semibold text-black">{acc.name}</p>
                     <p className="text-[11px] text-[#8C8C8C] font-mono">{acc.slug}</p>

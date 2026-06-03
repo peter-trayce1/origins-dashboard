@@ -74,6 +74,50 @@ export async function GET() {
   return NextResponse.json(enriched);
 }
 
+export async function DELETE(request: Request) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!await isSuperAdmin(user.id)) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+
+  const db = service();
+  const { orgIds } = await request.json() as { orgIds: string[] };
+  if (!Array.isArray(orgIds) || orgIds.length === 0) {
+    return NextResponse.json({ error: "orgIds required" }, { status: 400 });
+  }
+
+  // Find auth users who belong ONLY to the orgs being deleted (no other memberships)
+  const { data: members } = await db
+    .from("organisation_members")
+    .select("user_id, organisation_id")
+    .in("organisation_id", orgIds);
+
+  const userIds = [...new Set((members ?? []).map((m) => m.user_id))];
+
+  // Filter to users who have no memberships outside the orgs being deleted
+  const usersToDelete: string[] = [];
+  for (const uid of userIds) {
+    const { data: otherMemberships } = await db
+      .from("organisation_members")
+      .select("id")
+      .eq("user_id", uid)
+      .not("organisation_id", "in", `(${orgIds.join(",")})`)
+      .limit(1);
+    if (!otherMemberships?.length) usersToDelete.push(uid);
+  }
+
+  // Delete orgs (cascade handles brands, passports, members, QR codes, etc.)
+  const { error: orgError } = await db.from("organisations").delete().in("id", orgIds);
+  if (orgError) return NextResponse.json({ error: orgError.message }, { status: 500 });
+
+  // Delete auth users (best-effort — don't fail if some can't be deleted)
+  await Promise.allSettled(
+    usersToDelete.map((uid) => db.auth.admin.deleteUser(uid))
+  );
+
+  return NextResponse.json({ deleted: orgIds.length, usersDeleted: usersToDelete.length });
+}
+
 export async function PATCH(request: Request) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
