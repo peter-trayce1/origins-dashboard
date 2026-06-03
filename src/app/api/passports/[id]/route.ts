@@ -1,8 +1,23 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { createClient as createServiceClient } from "@supabase/supabase-js";
 import { calculateCompleteness } from "@/lib/completeness";
 import { makeUniqueSlug } from "@/lib/slugify";
 import type { Json } from "@/lib/supabase/types";
+
+function service() {
+  return createServiceClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    { auth: { autoRefreshToken: false, persistSession: false } }
+  );
+}
+
+async function logError(context: string, error: unknown) {
+  if (error && typeof error === "object" && "message" in error) {
+    console.error(`[passport PATCH] ${context}:`, (error as { message: string }).message);
+  }
+}
 
 export async function GET(
   _request: NextRequest,
@@ -73,9 +88,12 @@ export async function PATCH(
       passport_material_extras, claim_evidence_urls,
       ...passportData } = body;
 
+    // Use the service client for all writes — the user's ownership is already
+    // confirmed above (only their own passports pass RLS on the initial update).
+    // This avoids silent failures when the anon-key RLS check races or caches stale state.
+    const svc = service();
 
-
-    const { data: passport, error } = await supabase
+    const { data: passport, error } = await svc
       .from("passports")
       .update({ ...passportData, updated_at: new Date().toISOString() })
       .eq("id", id)
@@ -89,17 +107,16 @@ export async function PATCH(
 
     // Save claim_evidence_urls separately — its column type must be jsonb (not jsonb[])
     if (claim_evidence_urls !== undefined) {
-      await supabase
-        .from("passports")
-        .update({ claim_evidence_urls })
-        .eq("id", id);
+      const { error: e } = await svc.from("passports").update({ claim_evidence_urls }).eq("id", id);
+      if (e) await logError("claim_evidence_urls", e);
     }
 
     if (product_materials !== undefined) {
-      await supabase.from("product_materials").delete().eq("passport_id", id);
+      const { error: de } = await svc.from("product_materials").delete().eq("passport_id", id);
+      if (de) await logError("product_materials delete", de);
       if (product_materials.length > 0) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        await (supabase.from("product_materials") as any).insert(
+        const { error: ie } = await (svc.from("product_materials") as any).insert(
           product_materials.map((m: Record<string, unknown>, idx: number) => ({
             passport_id: id,
             sort_order: idx,
@@ -113,14 +130,16 @@ export async function PATCH(
             confidence_level: (m.confidence_level as string) || "brand_declared",
           }))
         );
+        if (ie) await logError("product_materials insert", ie);
       }
     }
 
     if (product_facilities !== undefined) {
-      await supabase.from("product_facilities").delete().eq("passport_id", id);
+      const { error: de } = await svc.from("product_facilities").delete().eq("passport_id", id);
+      if (de) await logError("product_facilities delete", de);
       if (product_facilities.length > 0) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        await (supabase.from("product_facilities") as any).insert(
+        const { error: ie } = await (svc.from("product_facilities") as any).insert(
           product_facilities.map((f: Record<string, unknown>, idx: number) => ({
             passport_id: id,
             sort_order: idx,
@@ -136,13 +155,15 @@ export async function PATCH(
             confidence_level: (f.confidence_level as string) || "brand_declared",
           }))
         );
+        if (ie) await logError("product_facilities insert", ie);
       }
     }
 
     if (product_certifications !== undefined) {
-      await supabase.from("product_certifications").delete().eq("passport_id", id);
+      const { error: de } = await svc.from("product_certifications").delete().eq("passport_id", id);
+      if (de) await logError("product_certifications delete", de);
       if (product_certifications.length > 0) {
-        await supabase.from("product_certifications").insert(
+        const { error: ie } = await svc.from("product_certifications").insert(
           product_certifications.map((c: Record<string, unknown>) => ({
             passport_id: id,
             certification_id: (c.certification_id as string) || null,
@@ -157,13 +178,15 @@ export async function PATCH(
             confidence_level: (c.confidence_level as string) || "brand_declared",
           }))
         );
+        if (ie) await logError("product_certifications insert", ie);
       }
     }
 
     if (care_instructions !== undefined) {
-      await supabase.from("care_instructions").delete().eq("passport_id", id);
+      const { error: de } = await svc.from("care_instructions").delete().eq("passport_id", id);
+      if (de) await logError("care_instructions delete", de);
       if (care_instructions.length > 0) {
-        await supabase.from("care_instructions").insert(
+        const { error: ie } = await svc.from("care_instructions").insert(
           care_instructions.map((c: Record<string, unknown>, idx: number) => ({
             passport_id: id,
             sort_order: idx,
@@ -172,13 +195,15 @@ export async function PATCH(
             icon_code: (c.icon_code as string) || null,
           }))
         );
+        if (ie) await logError("care_instructions insert", ie);
       }
     }
 
     if (circularity_actions !== undefined) {
-      await supabase.from("circularity_actions").delete().eq("passport_id", id);
+      const { error: de } = await svc.from("circularity_actions").delete().eq("passport_id", id);
+      if (de) await logError("circularity_actions delete", de);
       if (circularity_actions.length > 0) {
-        await supabase.from("circularity_actions").insert(
+        const { error: ie } = await svc.from("circularity_actions").insert(
           circularity_actions.map((a: Record<string, unknown>, idx: number) => ({
             passport_id: id,
             sort_order: idx,
@@ -188,23 +213,27 @@ export async function PATCH(
             url: (a.url as string) || null,
           }))
         );
+        if (ie) await logError("circularity_actions insert", ie);
       }
     }
 
     if (passport_material_extras !== undefined) {
-      await supabase.from("passport_material_extras").delete().eq("passport_id", id);
+      const { error: de } = await svc.from("passport_material_extras").delete().eq("passport_id", id);
+      if (de) await logError("passport_material_extras delete", de);
       if (Object.keys(passport_material_extras).length > 0) {
-        await supabase.from("passport_material_extras").insert({
+        const { error: ie } = await svc.from("passport_material_extras").insert({
           ...passport_material_extras,
           passport_id: id,
         });
+        if (ie) await logError("passport_material_extras insert", ie);
       }
     }
 
     if (impact_metrics !== undefined) {
-      await supabase.from("impact_metrics").delete().eq("passport_id", id);
+      const { error: de } = await svc.from("impact_metrics").delete().eq("passport_id", id);
+      if (de) await logError("impact_metrics delete", de);
       if (impact_metrics.length > 0) {
-        await supabase.from("impact_metrics").insert(
+        const { error: ie } = await svc.from("impact_metrics").insert(
           impact_metrics.map((m: Record<string, unknown>, idx: number) => ({
             passport_id: id,
             metric_key: (m.metric_key as string) || `metric_${idx}`,
@@ -226,10 +255,11 @@ export async function PATCH(
             confidence_level: (m.confidence_level as string) || "brand_declared",
           }))
         );
+        if (ie) await logError("impact_metrics insert", ie);
       }
     }
 
-    const { data: fullPassport } = await supabase
+    const { data: fullPassport } = await svc
       .from("passports")
       .select(`
         *,
@@ -244,7 +274,7 @@ export async function PATCH(
 
     if (fullPassport) {
       const completeness = calculateCompleteness(fullPassport as unknown as Parameters<typeof calculateCompleteness>[0]);
-      await supabase
+      await svc
         .from("passports")
         .update({
           completeness_score: completeness.score,
