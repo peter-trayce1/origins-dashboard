@@ -101,6 +101,7 @@ export async function POST(request: NextRequest) {
       success_url: `${appUrl}/billing?success=true&plan=${plan}`,
       cancel_url: `${appUrl}/billing?cancelled=true`,
       allow_promotion_codes: true,
+      automatic_tax: { enabled: true },
       billing_address_collection: "required",
       tax_id_collection: { enabled: true },
       subscription_data: {
