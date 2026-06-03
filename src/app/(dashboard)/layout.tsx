@@ -69,6 +69,43 @@ export default async function DashboardLayout({
     if (orgStatus === "pending")   redirect("/pending");
     if (orgStatus === "suspended") redirect("/pending");
 
+    // Start the 14-day trial on first login if not yet started
+    if (orgStatus === "approved") {
+      try {
+        const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+        const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+        if (serviceKey && supabaseUrl) {
+          const service = createServiceClient(supabaseUrl, serviceKey, {
+            auth: { autoRefreshToken: false, persistSession: false },
+          });
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const { data: billingRow } = await (service as any)
+            .from("organisations")
+            .select("billing_plan, trial_start_date")
+            .eq("id", member.organisation_id)
+            .maybeSingle();
+
+          if (billingRow?.billing_plan === "trial" && !billingRow?.trial_start_date) {
+            const trialStart = new Date();
+            const trialEnd   = new Date(trialStart);
+            trialEnd.setDate(trialEnd.getDate() + 14);
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            await (service as any)
+              .from("organisations")
+              .update({
+                trial_start_date:   trialStart.toISOString(),
+                trial_end_date:     trialEnd.toISOString(),
+                current_period_end: trialEnd.toISOString(),
+              })
+              .eq("id", member.organisation_id);
+            trialEndDate = trialEnd.toISOString();
+          }
+        }
+      } catch (err) {
+        console.error("[DashboardLayout] trial activation failed:", err);
+      }
+    }
+
     // Non-critical: billing/usage
     try {
       const { data: brand } = await supabase

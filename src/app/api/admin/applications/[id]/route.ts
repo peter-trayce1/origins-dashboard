@@ -2,11 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createClient as createServiceClient } from "@supabase/supabase-js";
 import { sendWorkspaceApproved } from "@/lib/email";
+import { isSuperAdmin } from "@/lib/super-admin";
 
-function isAdmin(email: string): boolean {
+function isAdminEmail(email: string): boolean {
   const adminEmails = (process.env.ADMIN_EMAILS ?? "").split(",").map((e) => e.trim().toLowerCase());
-  if (adminEmails.some((e) => e && e === email.toLowerCase())) return true;
-  return email.toLowerCase().endsWith("@originsid.com");
+  return adminEmails.some((e) => e && e === email.toLowerCase());
 }
 
 export async function POST(
@@ -17,7 +17,8 @@ export async function POST(
 
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user?.email || !isAdmin(user.email)) {
+  if (!user) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  if (!isAdminEmail(user.email ?? "") && !await isSuperAdmin(user.id)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
@@ -33,10 +34,8 @@ export async function POST(
   );
 
   if (action === "approve") {
-    const trialStart = new Date();
-    const trialEnd   = new Date(trialStart);
-    trialEnd.setDate(trialEnd.getDate() + 14);
-
+    // Trial dates are intentionally left null here — the 14-day clock starts
+    // the first time the customer logs in and reaches the dashboard.
     const { data: org, error } = await serviceSupabase
       .from("organisations")
       .update({
@@ -44,9 +43,9 @@ export async function POST(
         billing_plan:        "trial",
         billing_status:      "trialing",
         passport_limit:      3,
-        trial_start_date:    trialStart.toISOString(),
-        trial_end_date:      trialEnd.toISOString(),
-        current_period_end:  trialEnd.toISOString(),
+        trial_start_date:    null,
+        trial_end_date:      null,
+        current_period_end:  null,
       })
       .eq("id", id)
       .select("name")
@@ -64,14 +63,11 @@ export async function POST(
     if (members?.[0]?.user_id) {
       const { data: authUser } = await serviceSupabase.auth.admin.getUserById(members[0].user_id);
       if (authUser?.user?.email) {
-        const trialEndFormatted = trialEnd.toLocaleDateString("en-GB", {
-          day: "numeric", month: "long", year: "numeric",
-        });
         sendWorkspaceApproved({
           to:           authUser.user.email,
           fullName:     authUser.user.user_metadata?.full_name ?? "",
           brandName:    org.name,
-          trialEndDate: trialEndFormatted,
+          trialEndDate: "14 days from your first sign-in",
         }).catch(console.error);
       }
     }

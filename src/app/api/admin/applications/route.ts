@@ -1,17 +1,18 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createClient as createServiceClient } from "@supabase/supabase-js";
+import { isSuperAdmin } from "@/lib/super-admin";
 
-function isAdmin(email: string): boolean {
+function isAdminEmail(email: string): boolean {
   const adminEmails = (process.env.ADMIN_EMAILS ?? "").split(",").map((e) => e.trim().toLowerCase());
-  if (adminEmails.some((e) => e && e === email.toLowerCase())) return true;
-  return email.toLowerCase().endsWith("@originsid.com");
+  return adminEmails.some((e) => e && e === email.toLowerCase());
 }
 
 export async function GET() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user?.email || !isAdmin(user.email)) {
+  if (!user) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  if (!isAdminEmail(user.email ?? "") && !await isSuperAdmin(user.id)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
