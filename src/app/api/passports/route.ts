@@ -62,13 +62,13 @@ export async function POST(request: NextRequest) {
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
   // Auto-create a QR code immediately — tied to the ORI passport code, not the slug
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "";
+  const publicPassportUrl = process.env.NEXT_PUBLIC_PUBLIC_PASSPORT_URL ?? "";
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   await (supabase.from("qr_codes") as any).insert({
     passport_id: data.id,
     brand_id,
     label: "Default",
-    target_url: `${appUrl}/c/${data.passport_code}`,
+    target_url: `${publicPassportUrl}/c/${data.passport_code}`,
     is_active: true,
   });
 

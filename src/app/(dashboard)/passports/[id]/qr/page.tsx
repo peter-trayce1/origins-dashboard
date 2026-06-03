@@ -88,8 +88,9 @@ export default function PassportQRPage({ params }: { params: Promise<{ id: strin
     );
   }
 
-  const appUrl = typeof window !== "undefined" ? window.location.origin : "";
-  const publicUrl = passport?.slug ? `${appUrl}/p/${passport.slug}` : null;
+  const publicUrl = passport?.slug
+    ? `${process.env.NEXT_PUBLIC_PUBLIC_PASSPORT_URL ?? ""}/p/${passport.slug}`
+    : null;
   const isPublished = passport?.status === "published";
 
   return (

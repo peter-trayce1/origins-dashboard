@@ -101,8 +101,9 @@ export function BuilderRightPanel({ passportId, status, onNavigate }: Props) {
   const strength = getStrength(score);
   const slug     = useWizardStore((s) => s.step1.slug);
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://originsid.com";
-  const passportUrl = slug ? `${appUrl}/p/${slug}` : null;
+  const passportUrl = slug
+    ? `${process.env.NEXT_PUBLIC_PUBLIC_PASSPORT_URL ?? ""}/p/${slug}`
+    : null;
 
   useEffect(() => {
     if (!passportId) return;

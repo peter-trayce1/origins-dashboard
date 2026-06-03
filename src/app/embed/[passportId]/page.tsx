@@ -39,8 +39,7 @@ export default async function EmbedPage({
   const passport = await getPassport(passportId);
   if (!passport) notFound();
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://originsid.com";
-  const publicUrl = `${appUrl}/p/${passport.slug}`;
+  const publicUrl = `${process.env.NEXT_PUBLIC_PUBLIC_PASSPORT_URL ?? ""}/p/${passport.slug}`;
 
   const embedType = (["badge", "card", "full", "sustainability"].includes(type) ? type : "card") as EmbedType;
 

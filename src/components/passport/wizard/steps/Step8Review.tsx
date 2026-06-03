@@ -74,7 +74,7 @@ export function Step8Review({ passportId }: { passportId: string }) {
 
   function copyUrl() {
     if (!reviewData?.slug) return;
-    const url = `${window.location.origin}/p/${reviewData.slug}`;
+    const url = `${process.env.NEXT_PUBLIC_PUBLIC_PASSPORT_URL ?? ""}/p/${reviewData.slug}`;
     navigator.clipboard.writeText(url);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
@@ -89,7 +89,7 @@ export function Step8Review({ passportId }: { passportId: string }) {
   }
 
   const publicUrl = reviewData?.slug
-    ? `${typeof window !== "undefined" ? window.location.origin : ""}/p/${reviewData.slug}`
+    ? `${process.env.NEXT_PUBLIC_PUBLIC_PASSPORT_URL ?? ""}/p/${reviewData.slug}`
     : null;
 
   const isPublished = reviewData?.status === "published";
