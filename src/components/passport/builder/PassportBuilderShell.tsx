@@ -8,7 +8,7 @@ import { BuilderNavSidebar, type BuilderSection } from "./BuilderNavSidebar";
 import { BuilderLeftPanel } from "./BuilderLeftPanel";
 import { LivePassportPreview } from "./LivePassportPreview";
 import { BuilderRightPanel } from "./BuilderRightPanel";
-import { Loader2, CheckCircle, ArrowLeft, Globe, EyeOff, Save, Lock } from "lucide-react";
+import { Loader2, CheckCircle, ArrowLeft, Globe, EyeOff, Save, Lock, Package } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useDebounce } from "@/hooks/useDebounce";
 
@@ -159,6 +159,14 @@ export function PassportBuilderShell({ brandId, brandName, passportId, brandStor
     else toast.success("Progress saved");
   }
 
+  async function handleDownloadPack() {
+    if (!passportIdInStore) return;
+    const a = document.createElement("a");
+    a.href = `/api/passports/${passportIdInStore}/manufacturer-pack`;
+    a.download = "";
+    a.click();
+  }
+
   async function handlePublish() {
     if (!passportIdInStore) return;
     await save();
@@ -225,6 +233,19 @@ export function PassportBuilderShell({ brandId, brandName, passportId, brandStor
               Saved
             </span>
           ) : null}
+
+          {passportIdInStore && (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={handleDownloadPack}
+              className="text-xs"
+              title="Download Manufacturer Pack (ZIP)"
+            >
+              <Package className="h-3.5 w-3.5 mr-1.5" />
+              Manufacturer Pack
+            </Button>
+          )}
 
           <Button
             size="sm"

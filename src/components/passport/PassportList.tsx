@@ -19,6 +19,7 @@ import {
   X,
   Loader2,
   Download,
+  Package,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -208,6 +209,13 @@ export function PassportList({ initialPassports, brandId }: PassportListProps) {
     const a = document.createElement("a");
     a.href = url;
     a.download = `qr-code.${format}`;
+    a.click();
+  }
+
+  function downloadManufacturerPack(passportId: string) {
+    const a = document.createElement("a");
+    a.href = `/api/passports/${passportId}/manufacturer-pack`;
+    a.download = "";
     a.click();
   }
 
@@ -513,6 +521,13 @@ export function PassportList({ initialPassports, brandId }: PassportListProps) {
                                   >
                                     <Download className="h-3 w-3" strokeWidth={2} />
                                     SVG
+                                  </button>
+                                  <button
+                                    onClick={() => downloadManufacturerPack(passport.id as string)}
+                                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#E8E8E6] bg-[#111] hover:bg-[#333] transition-colors text-[11px] font-medium text-white"
+                                  >
+                                    <Package className="h-3 w-3" strokeWidth={2} />
+                                    Manufacturer Pack
                                   </button>
                                 </div>
                               </div>
