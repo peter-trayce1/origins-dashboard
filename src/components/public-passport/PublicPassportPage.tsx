@@ -108,7 +108,7 @@ interface PassportData {
     tier: number | null;
     website_url: string | null;
     confidence_level: ConfidenceLevel;
-    facility_certifications: string[] | null;
+    facility_certifications: { name: string; url: string }[] | null;
   }[];
   product_certifications: {
     id: string;
@@ -723,8 +723,8 @@ function MetricCard({
 
 // ─── Certification logo map ────────────────────────────────────────────────
 
+// gots.png is not present in public/cert-logos — omitted so GOTS shows the shield fallback gracefully
 const CERT_LOGO: Record<string, string> = {
-  "GOTS (Global Organic Textile Standard)": "/cert-logos/gots.png",
   "OEKO-TEX Standard 100":                  "/cert-logos/oeko-tex-100.png",
   "OEKO-TEX MADE IN GREEN":                 "/cert-logos/oeko-tex-made-in-green.png",
   "GRS (Global Recycled Standard)":         "/cert-logos/grs.png",
@@ -869,13 +869,21 @@ function TimelineNode({
               )}
             </div>
           </div>
-          {(facility.facility_certifications ?? []).length > 0 && (
+          {(facility.facility_certifications ?? []).filter(c => c.name).length > 0 && (
             <div className="flex flex-wrap gap-1 mt-2">
-              {(facility.facility_certifications ?? []).map((c, i) => (
-                <span key={i} className="text-[10px] font-mono text-[#333] border border-[#cccccc] rounded px-1.5 py-0.5">
-                  {c}
-                </span>
-              ))}
+              {(facility.facility_certifications ?? []).filter(c => c.name).map((c, i) =>
+                c.url ? (
+                  <a key={i} href={c.url} target="_blank" rel="noopener noreferrer"
+                     className="inline-flex items-center gap-1 text-[10px] font-mono text-[#0e6dea] border border-[#b3d4f7] rounded px-1.5 py-0.5 hover:bg-[#f0f7ff] transition-colors">
+                    {c.name}
+                    <ExternalLink className="h-2.5 w-2.5" />
+                  </a>
+                ) : (
+                  <span key={i} className="text-[10px] font-mono text-[#333] border border-[#cccccc] rounded px-1.5 py-0.5">
+                    {c.name}
+                  </span>
+                )
+              )}
             </div>
           )}
           {facility.confidence_level && (

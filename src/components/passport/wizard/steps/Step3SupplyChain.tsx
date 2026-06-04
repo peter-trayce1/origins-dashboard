@@ -1,12 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useWizardStore } from "@/stores/wizardStore";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Trash2, MapPin } from "lucide-react";
+import { ExternalLink, Loader2, MapPin, Plus, Trash2, Upload, X } from "lucide-react";
 import type { WizardFacility } from "@/types/wizard";
 
 // ── Supplier types (brand-friendly, replaces "process stage") ─────────────────
@@ -89,11 +89,46 @@ export const COUNTRY_FLAGS: Record<string, string> = {
   "United States": "🇺🇸", "Vietnam": "🇻🇳", "Wales": "🏴󠁧󠁢󠁷󠁬󠁳󠁿", "Other": "🌍",
 };
 
-// Common factory/supplier certifications shown as toggleable chips
-const FACILITY_CERT_OPTIONS = [
-  "GOTS", "OEKO-TEX", "SA8000", "ISO 9001", "ISO 14001",
-  "Better Cotton (BCI)", "Fair Trade", "Bluesign", "FSC", "B Corp", "GRS",
-];
+// ── Facility cert file upload ─────────────────────────────────────────────────
+
+function FacilityCertUpload({ onUploaded }: { onUploaded: (url: string) => void }) {
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
+
+  async function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    try {
+      const form = new FormData();
+      form.append("file", file);
+      const res = await fetch("/api/upload/image", { method: "POST", body: form });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Upload failed");
+      onUploaded(data.url);
+    } catch (err) {
+      console.error("Upload failed:", err);
+    } finally {
+      setUploading(false);
+      if (fileRef.current) fileRef.current.value = "";
+    }
+  }
+
+  return (
+    <>
+      <button
+        type="button"
+        disabled={uploading}
+        onClick={() => fileRef.current?.click()}
+        title="Upload certificate document"
+        className="h-7 w-7 shrink-0 flex items-center justify-center border border-[#E8E8E6] rounded-md hover:bg-[#F5F5F3] transition-colors"
+      >
+        {uploading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Upload className="h-3 w-3 text-[#525252]" />}
+      </button>
+      <input ref={fileRef} type="file" accept="application/pdf,image/*" className="hidden" onChange={handleFile} />
+    </>
+  );
+}
 
 // ── Supplier memory (localStorage) ───────────────────────────────────────────
 
@@ -212,12 +247,21 @@ export function Step3SupplyChain() {
     });
   }
 
-  function toggleFacilityCert(idx: number, certName: string) {
+  function addFacilityCert(idx: number) {
     const current = facilities[idx].facility_certifications ?? [];
-    const updated = current.includes(certName)
-      ? current.filter(c => c !== certName)
-      : [...current, certName];
-    updateFacility(idx, "facility_certifications", updated);
+    updateFacility(idx, "facility_certifications", [...current, { name: "", url: "" }]);
+  }
+
+  function removeFacilityCert(idx: number, certIdx: number) {
+    const current = facilities[idx].facility_certifications ?? [];
+    updateFacility(idx, "facility_certifications", current.filter((_, i) => i !== certIdx));
+  }
+
+  function updateFacilityCert(idx: number, certIdx: number, field: "name" | "url", value: string) {
+    const current = facilities[idx].facility_certifications ?? [];
+    updateFacility(idx, "facility_certifications",
+      current.map((c, i) => i === certIdx ? { ...c, [field]: value } : c)
+    );
   }
 
   function applyMemory(entry: SupplierMemoryEntry) {
@@ -237,6 +281,27 @@ export function Step3SupplyChain() {
   return (
     <div className="space-y-4">
       <SupplyChainMap facilities={facilities} />
+
+      {/* Previously used suppliers — shown at top so it's easy to quick-add */}
+      {memory.length > 0 && (
+        <div className="border border-[#E8E8E6] rounded-xl p-3">
+          <p className="text-[10px] text-[#8C8C8C] font-medium mb-2">Previously used suppliers</p>
+          <div className="flex flex-wrap gap-1.5">
+            {memory.map((m, i) => (
+              <button
+                key={i}
+                type="button"
+                onClick={() => applyMemory(m)}
+                className="flex items-center gap-1 text-[10px] text-[#525252] border border-[#E8E8E6] rounded-full px-2.5 py-1 hover:bg-[#F5F5F3] hover:border-black/20 transition-colors"
+              >
+                <MapPin className="h-2.5 w-2.5 text-[#8C8C8C]" />
+                {m.facility_name}
+                {m.country && <span className="ml-0.5">{COUNTRY_FLAGS[m.country] ?? ""}</span>}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="space-y-2">
         {facilities.length === 0 && (
@@ -399,52 +464,62 @@ export function Step3SupplyChain() {
                 </Select>
               </div>
             </div>
-            {/* Supplier certifications */}
-            <div className="space-y-1">
+            {/* Supplier certifications — free-text with optional link / file upload */}
+            <div className="space-y-1.5">
               <Label className="text-[10px] font-medium text-[#8C8C8C]">
-                Supplier certifications <span className="text-[10px] font-normal text-[#BDBDBB]">Optional</span>
+                Certifications <span className="text-[10px] font-normal text-[#BDBDBB]">Optional</span>
               </Label>
-              <div className="flex flex-wrap gap-1">
-                {FACILITY_CERT_OPTIONS.map((certName) => {
-                  const active = (facility.facility_certifications ?? []).includes(certName);
-                  return (
+              {(facility.facility_certifications ?? []).map((fc, certIdx) => (
+                <div key={certIdx} className="bg-[#FAFAF8] border border-[#F0F0EE] rounded-lg p-2 space-y-1.5">
+                  <div className="flex items-center gap-1.5">
+                    <Input
+                      className="h-7 text-[12px] flex-1 min-w-0 bg-white"
+                      placeholder="e.g. GOTS, ISO 9001, SA8000"
+                      value={fc.name}
+                      onChange={(e) => updateFacilityCert(idx, certIdx, "name", e.target.value)}
+                    />
                     <button
-                      key={certName}
                       type="button"
-                      onClick={() => toggleFacilityCert(idx, certName)}
-                      className={`text-[10px] px-2 py-0.5 rounded-full border transition-colors ${
-                        active ? "bg-[#333] text-white border-[#333]" : "text-[#525252] border-[#E8E8E6] hover:bg-[#F5F5F3] hover:border-black/20"
-                      }`}
+                      onClick={() => removeFacilityCert(idx, certIdx)}
+                      className="p-1 text-[#8C8C8C] hover:text-red-600 transition-colors shrink-0"
                     >
-                      {certName}
+                      <Trash2 className="h-3 w-3" />
                     </button>
-                  );
-                })}
-              </div>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <Input
+                      className="h-7 text-[11px] flex-1 min-w-0 bg-white"
+                      type="url"
+                      placeholder="Certificate link (optional)"
+                      value={fc.url}
+                      onChange={(e) => updateFacilityCert(idx, certIdx, "url", e.target.value)}
+                    />
+                    {fc.url && (
+                      <a href={fc.url} target="_blank" rel="noopener noreferrer" className="shrink-0">
+                        <ExternalLink className="h-3.5 w-3.5 text-[#0e6dea]" />
+                      </a>
+                    )}
+                    <FacilityCertUpload onUploaded={(url) => updateFacilityCert(idx, certIdx, "url", url)} />
+                    {fc.url && (
+                      <button type="button" onClick={() => updateFacilityCert(idx, certIdx, "url", "")}
+                              className="shrink-0 text-[#8C8C8C] hover:text-red-600">
+                        <X className="h-3 w-3" />
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ))}
+              <button
+                type="button"
+                onClick={() => addFacilityCert(idx)}
+                className="flex items-center gap-1 text-[11px] text-[#0e6dea] hover:text-[#0a5bc7] transition-colors"
+              >
+                <Plus className="h-3 w-3" />
+                Add certification
+              </button>
             </div>
           </div>
         ))}
-
-        {/* Previously used suppliers */}
-        {memory.length > 0 && (
-          <div className="border border-[#E8E8E6] rounded-xl p-3">
-            <p className="text-[10px] text-[#8C8C8C] font-medium mb-2">Previously used suppliers</p>
-            <div className="flex flex-wrap gap-1.5">
-              {memory.map((m, i) => (
-                <button
-                  key={i}
-                  type="button"
-                  onClick={() => applyMemory(m)}
-                  className="flex items-center gap-1 text-[10px] text-[#525252] border border-[#E8E8E6] rounded-full px-2.5 py-1 hover:bg-[#F5F5F3] hover:border-black/20 transition-colors"
-                >
-                  <MapPin className="h-2.5 w-2.5 text-[#8C8C8C]" />
-                  {m.facility_name}
-                  {m.country && <span className="ml-0.5">{COUNTRY_FLAGS[m.country] ?? ""}</span>}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
 
         <Button variant="outline" size="sm" onClick={addFacility} className="w-full h-8 text-[12px]">
           <Plus className="h-3.5 w-3.5 mr-1.5" />

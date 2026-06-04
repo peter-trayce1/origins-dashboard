@@ -241,8 +241,8 @@ const METRIC_TYPE_BG: Record<string, string> = {
 };
 
 // Certification logo map — key matches the CERTIFICATIONS dropdown values in Step5Certifications
+// Note: gots.png is not present in public/cert-logos — omitted so GOTS gracefully shows the shield fallback
 const CERT_LOGO: Record<string, string> = {
-  "GOTS (Global Organic Textile Standard)": "/cert-logos/gots.png",
   "OEKO-TEX Standard 100":                  "/cert-logos/oeko-tex-100.png",
   "OEKO-TEX MADE IN GREEN":                 "/cert-logos/oeko-tex-made-in-green.png",
   "GRS (Global Recycled Standard)":         "/cert-logos/grs.png",
@@ -312,9 +312,9 @@ function SmallTimelineNode({ facility, isLast, index }: {
                 {normalizeProcessStage(facility.process_stage)}
               </span>
             )}
-            {(facility.facility_certifications ?? []).map((c, i) => (
+            {(facility.facility_certifications ?? []).filter(c => c.name).map((c, i) => (
               <span key={i} className="text-[6.5px] font-mono text-[#555] border border-[#e0e0e0] rounded px-1 py-0.5">
-                {c}
+                {c.name}
               </span>
             ))}
             {facility.website_url && (

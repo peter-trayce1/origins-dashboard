@@ -285,7 +285,7 @@ export type Database = {
           confidence_level: "verified" | "brand_declared" | "supplier_declared" | "ai_suggested" | "missing";
           sort_order: number;
           created_at: string;
-          facility_certifications: string[] | null;
+          facility_certifications: { name: string; url: string }[] | null;
         };
         Insert: Partial<Omit<Database["public"]["Tables"]["product_facilities"]["Row"], "id" | "created_at">>;
         Update: Partial<Omit<Database["public"]["Tables"]["product_facilities"]["Row"], "id" | "created_at">>;

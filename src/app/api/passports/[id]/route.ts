@@ -134,7 +134,7 @@ export async function PATCH(
             facility_address: (f.facility_address as string) || null,
             ownership_relationship: (f.ownership_relationship as string) || null,
             confidence_level: (f.confidence_level as string) || "brand_declared",
-            facility_certifications: (f.facility_certifications as string[]) || [],
+            facility_certifications: (f.facility_certifications as { name: string; url: string }[]) || [],
           }))
         );
         if (e) console.error("[passport PATCH] product_facilities insert:", e.message);

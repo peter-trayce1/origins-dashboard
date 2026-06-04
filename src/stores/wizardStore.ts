@@ -222,7 +222,7 @@ export const useWizardStore = create<WizardStore>((set) => ({
           facility_address:       (f.facility_address as string) ?? "",
           ownership_relationship:    ((f.ownership_relationship as string) ?? "") as import("@/types/wizard").WizardFacility["ownership_relationship"],
           confidence_level:          ((f.confidence_level as string) ?? "brand_declared") as import("@/types/passport").ConfidenceLevel,
-          facility_certifications:   (f.facility_certifications as string[]) ?? [],
+          facility_certifications:   (f.facility_certifications as { name: string; url: string }[]) ?? [],
         })),
       },
       step4: {
