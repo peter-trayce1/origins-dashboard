@@ -1,11 +1,13 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { useWizardStore } from "@/stores/wizardStore";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Trash2 } from "lucide-react";
 import type { WizardCareInstruction } from "@/types/wizard";
+import { CareSymbolIcon } from "@/components/shared/care-icons";
 
 const CARE_TYPES = [
   { value: "wash",      label: "Washing" },
@@ -48,8 +50,44 @@ const CARE_CHIPS: { category: string; items: { type: string; instruction: string
   },
 ];
 
+// ── Care instruction memory (localStorage, custom instructions only) ──────────
+
+const CARE_MEMORY_KEY = "origins_care_memory_v1";
+
+const PREDEFINED_INSTRUCTIONS = new Set(
+  CARE_CHIPS.flatMap((g) => g.items.map((i) => i.instruction))
+);
+
+type CareMemoryEntry = { type: string; instruction: string };
+
+function useCareMemory() {
+  const [memory, setMemory] = useState<CareMemoryEntry[]>([]);
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(CARE_MEMORY_KEY);
+      if (raw) setMemory(JSON.parse(raw));
+    } catch { /* ignore */ }
+  }, []);
+
+  function saveInstruction(entry: CareMemoryEntry) {
+    if (!entry.instruction.trim() || PREDEFINED_INSTRUCTIONS.has(entry.instruction)) return;
+    setMemory((prev) => {
+      const deduped = prev.filter((m) => m.instruction !== entry.instruction);
+      const updated = [entry, ...deduped].slice(0, 30);
+      try { localStorage.setItem(CARE_MEMORY_KEY, JSON.stringify(updated)); } catch { /* ignore */ }
+      return updated;
+    });
+  }
+
+  return { memory, saveInstruction };
+}
+
+// ── Main component ────────────────────────────────────────────────────────────
+
 export function Step6Care() {
   const { step6, setStep6 } = useWizardStore();
+  const { memory, saveInstruction } = useCareMemory();
 
   function addCare() {
     setStep6({
@@ -105,6 +143,33 @@ export function Step6Care() {
         ))}
       </div>
 
+      {/* Previously used custom instructions */}
+      {memory.length > 0 && (
+        <div>
+          <p className="text-[10px] font-semibold text-[#8C8C8C] uppercase tracking-wider mb-1.5">Previously used</p>
+          <div className="flex flex-wrap gap-1.5">
+            {memory.map((m, i) => {
+              const added = step6.care_instructions.some((c) => c.instruction === m.instruction);
+              return (
+                <button
+                  key={i}
+                  onClick={() => addQuickCare(m.type, m.instruction)}
+                  disabled={added}
+                  className={`flex items-center gap-1.5 text-[10px] px-2.5 py-1 rounded-full border transition-colors ${
+                    added
+                      ? "border-black/20 bg-[#F4F4F2] text-[#525252] cursor-default"
+                      : "border-[#E8E8E6] text-[#525252] hover:border-black/30 hover:text-black"
+                  }`}
+                >
+                  <CareSymbolIcon type={m.type} className="w-3 h-3" />
+                  {added ? "✓ " : ""}{m.instruction}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       {/* Instruction list */}
       <div className="space-y-2">
         {step6.care_instructions.length === 0 && (
@@ -132,6 +197,7 @@ export function Step6Care() {
               placeholder="Instruction text"
               value={care.instruction}
               onChange={(e) => updateCare(idx, "instruction", e.target.value)}
+              onBlur={() => saveInstruction({ type: care.type, instruction: care.instruction })}
             />
             <button
               onClick={() => removeCare(idx)}
