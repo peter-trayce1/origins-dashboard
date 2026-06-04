@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import type { MetricType } from "@/types/wizard";
 import { CareSymbolIcon, CARE_LABELS } from "@/components/shared/care-icons";
+import { SUPPLIER_TYPE_ORDER, normalizeProcessStage } from "@/components/passport/wizard/steps/Step3SupplyChain";
 
 function formatMonthYear(value: string): string {
   const [year, month] = value.split("-");
@@ -316,10 +317,9 @@ function SmallTimelineNode({ facility, isLast, index }: {
           <div className="flex flex-col items-end gap-1 shrink-0">
             {facility.process_stage && (
               <span className="text-[7.5px] font-mono text-[#333] border border-[#cccccc] rounded px-1.5 py-0.5">
-                {facility.process_stage}
+                {normalizeProcessStage(facility.process_stage)}
               </span>
             )}
-            <span className="text-[7px] font-mono text-[#8b8b8b]">Tier {facility.tier ?? index + 1}</span>
             {facility.website_url && (
               <span className="text-[7px] text-[#0e6dea] underline truncate max-w-[80px]">Visit website</span>
             )}
@@ -427,7 +427,11 @@ export function LivePassportPreview({
     onSectionChange?.(TAB_TO_SECTION[tab]);
   }
 
-  const sortedFacilities = [...s3.facilities].sort((a, b) => (b.tier ?? 0) - (a.tier ?? 0));
+  const sortedFacilities = [...s3.facilities].sort((a, b) => {
+    const stageA = normalizeProcessStage(a.process_stage);
+    const stageB = normalizeProcessStage(b.process_stage);
+    return (SUPPLIER_TYPE_ORDER[stageA] ?? 99) - (SUPPLIER_TYPE_ORDER[stageB] ?? 99);
+  });
   const originCountry = [...s3.facilities]
     .sort((a, b) => (a.tier ?? 99) - (b.tier ?? 99))[0]?.country ?? "";
 

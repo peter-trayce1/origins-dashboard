@@ -15,7 +15,7 @@ import { Step8Circularity } from "@/components/passport/wizard/steps/Step8Circul
 const SECTION_META: Record<BuilderSection, { title: string; description: string }> = {
   product:        { title: "Product information",      description: "Identity, images, and core metadata." },
   materials:      { title: "Materials & composition",  description: "What is this product made from?" },
-  supply_chain:   { title: "Supply chain",             description: "Where was it made? Add each step of the journey." },
+  supply_chain:   { title: "Supply chain",             description: "Add the key suppliers behind this product. Start with the final assembly factory, then add fabric, yarn and raw material partners if known." },
   impact:         { title: "Sustainability & impact",  description: "Environmental metrics and substantiated claims." },
   certifications: { title: "Certifications",           description: "Third-party certifications and compliance records." },
   care:           { title: "Care & durability",        description: "Care instructions and repairability information." },

@@ -13,6 +13,7 @@ import {
 import type { MetricType } from "@/types/wizard";
 import type { ConfidenceLevel } from "@/types/passport";
 import { CareSymbolIcon, CARE_LABELS } from "@/components/shared/care-icons";
+import { SUPPLIER_TYPE_ORDER, normalizeProcessStage } from "@/components/passport/wizard/steps/Step3SupplyChain";
 
 // ─── Data shape ────────────────────────────────────────────────────────────
 
@@ -868,12 +869,9 @@ function TimelineNode({
             <div className="flex flex-col items-end gap-1.5 shrink-0">
               {facility.process_stage && (
                 <span className="text-[10px] font-mono text-[#333] border border-[#cccccc] rounded-lg px-2 py-0.5">
-                  {facility.process_stage}
+                  {normalizeProcessStage(facility.process_stage)}
                 </span>
               )}
-              <span className="text-[9px] font-mono text-[#8b8b8b]">
-                Tier {facility.tier ?? index + 1}
-              </span>
             </div>
           </div>
           {facility.confidence_level && (
@@ -979,9 +977,11 @@ export function PublicPassportPage({ passport, previewMode = false }: { passport
 
   const nextTab = TAB_SEQUENCE[TAB_SEQUENCE.indexOf(activeTab) + 1] ?? null;
 
-  const sortedFacilities = [...passport.product_facilities].sort(
-    (a, b) => (b.tier ?? 0) - (a.tier ?? 0)
-  );
+  const sortedFacilities = [...passport.product_facilities].sort((a, b) => {
+    const stageA = normalizeProcessStage(a.process_stage);
+    const stageB = normalizeProcessStage(b.process_stage);
+    return (SUPPLIER_TYPE_ORDER[stageA] ?? 99) - (SUPPLIER_TYPE_ORDER[stageB] ?? 99);
+  });
 
   const originCountry = passport.country_of_origin
     || [...passport.product_facilities]
@@ -1351,7 +1351,7 @@ export function PublicPassportPage({ passport, previewMode = false }: { passport
             {sortedFacilities.length > 0 && (
               <div className="px-5 pt-6 pb-4">
                 <p className="text-[10px] font-mono uppercase tracking-widest text-[#8b8b8b] mb-4">
-                  Product Origins · {sortedFacilities.length} tier{sortedFacilities.length !== 1 ? "s" : ""}
+                  Where this product came from · {sortedFacilities.length} supplier{sortedFacilities.length !== 1 ? "s" : ""}
                 </p>
                 <div>
                   {sortedFacilities.map((f, idx) => (
