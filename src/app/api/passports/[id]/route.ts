@@ -134,6 +134,7 @@ export async function PATCH(
             facility_address: (f.facility_address as string) || null,
             ownership_relationship: (f.ownership_relationship as string) || null,
             confidence_level: (f.confidence_level as string) || "brand_declared",
+            facility_certifications: (f.facility_certifications as string[]) || [],
           }))
         );
         if (e) console.error("[passport PATCH] product_facilities insert:", e.message);
@@ -156,6 +157,8 @@ export async function PATCH(
             verification_url: (c.verification_url as string) || null,
             claim_type: (c.claim_type as string) || null,
             confidence_level: (c.confidence_level as string) || "brand_declared",
+            description: (c.description as string) || null,
+            custom_logo_url: (c.custom_logo_url as string) || null,
           }))
         );
         if (e) console.error("[passport PATCH] product_certifications insert:", e.message);

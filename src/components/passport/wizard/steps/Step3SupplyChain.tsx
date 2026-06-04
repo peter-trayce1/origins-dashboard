@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { useWizardStore } from "@/stores/wizardStore";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -74,8 +75,8 @@ const COUNTRIES = [
   "Bangladesh", "Belgium", "Brazil", "Cambodia", "China", "Denmark",
   "England", "Ethiopia", "France", "Germany", "India", "Indonesia", "Italy",
   "Japan", "Morocco", "Northern Ireland", "Pakistan", "Peru", "Portugal", "Romania",
-  "Scotland", "Spain", "Sri Lanka", "Sweden", "Thailand", "Turkey", "United Kingdom",
-  "United States", "Vietnam", "Wales", "Other",
+  "Scotland", "Spain", "Sri Lanka", "Sweden", "Taiwan", "Thailand", "Turkey",
+  "United Kingdom", "United States", "Vietnam", "Wales", "Other",
 ];
 
 export const COUNTRY_FLAGS: Record<string, string> = {
@@ -84,9 +85,48 @@ export const COUNTRY_FLAGS: Record<string, string> = {
   "France": "🇫🇷", "Germany": "🇩🇪", "India": "🇮🇳", "Indonesia": "🇮🇩", "Italy": "🇮🇹",
   "Japan": "🇯🇵", "Morocco": "🇲🇦", "Northern Ireland": "🇬🇧", "Pakistan": "🇵🇰", "Peru": "🇵🇪",
   "Portugal": "🇵🇹", "Romania": "🇷🇴", "Scotland": "🏴󠁧󠁢󠁳󠁣󠁴󠁿", "Spain": "🇪🇸", "Sri Lanka": "🇱🇰",
-  "Sweden": "🇸🇪", "Thailand": "🇹🇭", "Turkey": "🇹🇷", "United Kingdom": "🇬🇧",
+  "Sweden": "🇸🇪", "Taiwan": "🇹🇼", "Thailand": "🇹🇭", "Turkey": "🇹🇷", "United Kingdom": "🇬🇧",
   "United States": "🇺🇸", "Vietnam": "🇻🇳", "Wales": "🏴󠁧󠁢󠁷󠁬󠁳󠁿", "Other": "🌍",
 };
+
+// Common factory/supplier certifications shown as toggleable chips
+const FACILITY_CERT_OPTIONS = [
+  "GOTS", "OEKO-TEX", "SA8000", "ISO 9001", "ISO 14001",
+  "Better Cotton (BCI)", "Fair Trade", "Bluesign", "FSC", "B Corp", "GRS",
+];
+
+// ── Supplier memory (localStorage) ───────────────────────────────────────────
+
+const MEMORY_KEY = "origins_supplier_memory_v1";
+
+type SupplierMemoryEntry = Pick<WizardFacility, "facility_name" | "country" | "city" | "process_stage" | "website_url">;
+
+function useSupplierMemory() {
+  const [memory, setMemory] = useState<SupplierMemoryEntry[]>([]);
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(MEMORY_KEY);
+      if (raw) setMemory(JSON.parse(raw));
+    } catch { /* ignore */ }
+  }, []);
+
+  function saveSupplier(f: WizardFacility) {
+    if (!f.facility_name) return;
+    setMemory((prev) => {
+      const deduped = prev.filter((m) => m.facility_name !== f.facility_name);
+      const updated = [
+        { facility_name: f.facility_name, country: f.country, city: f.city,
+          process_stage: f.process_stage, website_url: f.website_url },
+        ...deduped,
+      ].slice(0, 20);
+      try { localStorage.setItem(MEMORY_KEY, JSON.stringify(updated)); } catch { /* ignore */ }
+      return updated;
+    });
+  }
+
+  return { memory, saveSupplier };
+}
 
 const OWNERSHIP_OPTIONS = [
   { value: "brand_owned",    label: "Brand-owned" },
@@ -107,6 +147,7 @@ function defaultFacility(): WizardFacility {
     facility_address: "",
     ownership_relationship: "",
     confidence_level: "brand_declared",
+    facility_certifications: [],
   };
 }
 
@@ -148,6 +189,7 @@ function SupplyChainMap({ facilities }: { facilities: WizardFacility[] }) {
 export function Step3SupplyChain() {
   const { step3, setStep3 } = useWizardStore();
   const facilities = step3.facilities;
+  const { memory, saveSupplier } = useSupplierMemory();
 
   function addFacility() {
     setStep3({ facilities: [...facilities, defaultFacility()] });
@@ -167,6 +209,28 @@ export function Step3SupplyChain() {
       facilities: facilities.map((f, i) =>
         i === idx ? { ...f, process_stage: supplierType, tier } : f
       ),
+    });
+  }
+
+  function toggleFacilityCert(idx: number, certName: string) {
+    const current = facilities[idx].facility_certifications ?? [];
+    const updated = current.includes(certName)
+      ? current.filter(c => c !== certName)
+      : [...current, certName];
+    updateFacility(idx, "facility_certifications", updated);
+  }
+
+  function applyMemory(entry: SupplierMemoryEntry) {
+    setStep3({
+      facilities: [...facilities, {
+        ...defaultFacility(),
+        facility_name: entry.facility_name,
+        country: entry.country ?? "",
+        city: entry.city ?? "",
+        process_stage: entry.process_stage ?? "",
+        website_url: entry.website_url ?? "",
+        tier: SUPPLIER_TYPE_TO_TIER[entry.process_stage ?? ""] ?? 1,
+      }],
     });
   }
 
@@ -238,6 +302,7 @@ export function Step3SupplyChain() {
                 placeholder="e.g. Atelier Silva"
                 value={facility.facility_name}
                 onChange={(e) => updateFacility(idx, "facility_name", e.target.value)}
+                onBlur={() => { if (facility.facility_name) saveSupplier(facility); }}
               />
             </div>
 
@@ -334,8 +399,52 @@ export function Step3SupplyChain() {
                 </Select>
               </div>
             </div>
+            {/* Supplier certifications */}
+            <div className="space-y-1">
+              <Label className="text-[10px] font-medium text-[#8C8C8C]">
+                Supplier certifications <span className="text-[10px] font-normal text-[#BDBDBB]">Optional</span>
+              </Label>
+              <div className="flex flex-wrap gap-1">
+                {FACILITY_CERT_OPTIONS.map((certName) => {
+                  const active = (facility.facility_certifications ?? []).includes(certName);
+                  return (
+                    <button
+                      key={certName}
+                      type="button"
+                      onClick={() => toggleFacilityCert(idx, certName)}
+                      className={`text-[10px] px-2 py-0.5 rounded-full border transition-colors ${
+                        active ? "bg-[#333] text-white border-[#333]" : "text-[#525252] border-[#E8E8E6] hover:bg-[#F5F5F3] hover:border-black/20"
+                      }`}
+                    >
+                      {certName}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
           </div>
         ))}
+
+        {/* Previously used suppliers */}
+        {memory.length > 0 && (
+          <div className="border border-[#E8E8E6] rounded-xl p-3">
+            <p className="text-[10px] text-[#8C8C8C] font-medium mb-2">Previously used suppliers</p>
+            <div className="flex flex-wrap gap-1.5">
+              {memory.map((m, i) => (
+                <button
+                  key={i}
+                  type="button"
+                  onClick={() => applyMemory(m)}
+                  className="flex items-center gap-1 text-[10px] text-[#525252] border border-[#E8E8E6] rounded-full px-2.5 py-1 hover:bg-[#F5F5F3] hover:border-black/20 transition-colors"
+                >
+                  <MapPin className="h-2.5 w-2.5 text-[#8C8C8C]" />
+                  {m.facility_name}
+                  {m.country && <span className="ml-0.5">{COUNTRY_FLAGS[m.country] ?? ""}</span>}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
 
         <Button variant="outline" size="sm" onClick={addFacility} className="w-full h-8 text-[12px]">
           <Plus className="h-3.5 w-3.5 mr-1.5" />

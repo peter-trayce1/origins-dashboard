@@ -108,6 +108,7 @@ interface PassportData {
     tier: number | null;
     website_url: string | null;
     confidence_level: ConfidenceLevel;
+    facility_certifications: string[] | null;
   }[];
   product_certifications: {
     id: string;
@@ -120,6 +121,8 @@ interface PassportData {
     confidence_level: ConfidenceLevel;
     document_url: string | null;
     verification_url: string | null;
+    description: string | null;
+    custom_logo_url: string | null;
   }[];
   care_instructions: {
     id: string;
@@ -169,7 +172,7 @@ const COUNTRY_FLAGS: Record<string, string> = {
   "France": "🇫🇷", "Germany": "🇩🇪", "India": "🇮🇳", "Indonesia": "🇮🇩", "Italy": "🇮🇹",
   "Japan": "🇯🇵", "Morocco": "🇲🇦", "Northern Ireland": "🇬🇧", "Pakistan": "🇵🇰", "Peru": "🇵🇪",
   "Portugal": "🇵🇹", "Romania": "🇷🇴", "Scotland": "🏴󠁧󠁢󠁳󠁣󠁴󠁿", "Spain": "🇪🇸", "Sri Lanka": "🇱🇰",
-  "Sweden": "🇸🇪", "Thailand": "🇹🇭", "Turkey": "🇹🇷", "United Kingdom": "🇬🇧",
+  "Sweden": "🇸🇪", "Taiwan": "🇹🇼", "Thailand": "🇹🇭", "Turkey": "🇹🇷", "United Kingdom": "🇬🇧",
   "United States": "🇺🇸", "Vietnam": "🇻🇳", "Wales": "🏴󠁧󠁢󠁷󠁬󠁳󠁿", "Other": "🌍",
 };
 
@@ -746,24 +749,13 @@ const CERT_LOGO: Record<string, string> = {
   "REACH Declaration":                      "/cert-logos/reach.png",
 };
 
-function CertLogoOrShield({ name }: { name: string }) {
-  const logoPath = CERT_LOGO[name];
-  if (!logoPath) return <ShieldCheck className="h-5 w-5 text-[#00933e]" strokeWidth={1.5} />;
+function CertLogoOrShield({ name, customLogoUrl }: { name: string; customLogoUrl?: string | null }) {
+  const [imgError, setImgError] = useState(false);
+  const logoPath = customLogoUrl || CERT_LOGO[name];
+  if (!logoPath || imgError) return <ShieldCheck className="h-5 w-5 text-[#00933e]" strokeWidth={1.5} />;
   return (
-    <>
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src={logoPath}
-        alt={name}
-        className="w-9 h-9 object-contain"
-        onError={(e) => {
-          e.currentTarget.style.display = "none";
-          const fb = e.currentTarget.nextElementSibling as HTMLElement | null;
-          if (fb) fb.style.removeProperty("display");
-        }}
-      />
-      <ShieldCheck className="h-5 w-5 text-[#00933e] hidden" strokeWidth={1.5} />
-    </>
+    // eslint-disable-next-line @next/next/no-img-element
+    <img src={logoPath} alt={name} className="w-9 h-9 object-contain" onError={() => setImgError(true)} />
   );
 }
 
@@ -775,11 +767,14 @@ function CertCard({ cert }: { cert: PassportData["product_certifications"][0] })
     <div className="bg-white border border-[#e8e8e8] rounded-2xl overflow-hidden">
       <div className="p-4 flex items-start gap-3.5">
         <div className="w-11 h-11 rounded-xl bg-[#f5f5f3] flex items-center justify-center shrink-0 overflow-hidden">
-          <CertLogoOrShield name={cert.certification_name} />
+          <CertLogoOrShield name={cert.certification_name} customLogoUrl={cert.custom_logo_url} />
         </div>
         <div className="flex-1 min-w-0">
           <p className="text-sm font-medium text-[#333] leading-snug">{cert.certification_name}</p>
           {cert.issued_by && <p className="text-xs text-[#8b8b8b] mt-0.5">{cert.issued_by}</p>}
+          {cert.description && (
+            <p className="text-xs text-[#555] leading-relaxed mt-1.5">{cert.description}</p>
+          )}
           <div className="mt-1.5">
             <ConfidenceBadge level={cert.confidence_level} />
           </div>
@@ -874,6 +869,15 @@ function TimelineNode({
               )}
             </div>
           </div>
+          {(facility.facility_certifications ?? []).length > 0 && (
+            <div className="flex flex-wrap gap-1 mt-2">
+              {(facility.facility_certifications ?? []).map((c, i) => (
+                <span key={i} className="text-[10px] font-mono text-[#333] border border-[#cccccc] rounded px-1.5 py-0.5">
+                  {c}
+                </span>
+              ))}
+            </div>
+          )}
           {facility.confidence_level && (
             <ConfidenceBadge level={facility.confidence_level} />
           )}

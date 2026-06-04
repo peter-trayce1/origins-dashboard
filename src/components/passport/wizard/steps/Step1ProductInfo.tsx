@@ -20,8 +20,8 @@ const COUNTRIES = [
   "Bangladesh", "Belgium", "Brazil", "Cambodia", "China", "Denmark",
   "England", "Ethiopia", "France", "Germany", "India", "Indonesia", "Italy",
   "Japan", "Morocco", "Northern Ireland", "Pakistan", "Peru", "Portugal", "Romania",
-  "Scotland", "Spain", "Sri Lanka", "Sweden", "Thailand", "Turkey", "United Kingdom",
-  "United States", "Vietnam", "Wales", "Other",
+  "Scotland", "Spain", "Sri Lanka", "Sweden", "Taiwan", "Thailand", "Turkey",
+  "United Kingdom", "United States", "Vietnam", "Wales", "Other",
 ];
 
 function FieldGroup({ title, children, defaultOpen = true }: {

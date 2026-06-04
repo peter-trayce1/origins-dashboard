@@ -23,6 +23,7 @@ export interface WizardFacility {
   facility_address: string;
   ownership_relationship: "brand_owned" | "tier1_supplier" | "subcontractor" | "";
   confidence_level: ConfidenceLevel;
+  facility_certifications: string[];
 }
 
 export interface WizardCertification {
@@ -37,6 +38,8 @@ export interface WizardCertification {
   verification_url: string;
   claim_type: string;
   confidence_level: ConfidenceLevel;
+  description: string;
+  custom_logo_url: string;
 }
 
 export interface WizardCareInstruction {

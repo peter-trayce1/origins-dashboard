@@ -64,7 +64,7 @@ const COUNTRY_FLAGS: Record<string, string> = {
   "France": "🇫🇷", "Germany": "🇩🇪", "India": "🇮🇳", "Indonesia": "🇮🇩", "Italy": "🇮🇹",
   "Japan": "🇯🇵", "Morocco": "🇲🇦", "Northern Ireland": "🇬🇧", "Pakistan": "🇵🇰", "Peru": "🇵🇪",
   "Portugal": "🇵🇹", "Romania": "🇷🇴", "Scotland": "🏴󠁧󠁢󠁳󠁣󠁴󠁿", "Spain": "🇪🇸", "Sri Lanka": "🇱🇰",
-  "Sweden": "🇸🇪", "Thailand": "🇹🇭", "Turkey": "🇹🇷", "United Kingdom": "🇬🇧",
+  "Sweden": "🇸🇪", "Taiwan": "🇹🇼", "Thailand": "🇹🇭", "Turkey": "🇹🇷", "United Kingdom": "🇬🇧",
   "United States": "🇺🇸", "Vietnam": "🇻🇳", "Wales": "🏴󠁧󠁢󠁷󠁬󠁳󠁿", "Other": "🌍",
 };
 
@@ -267,21 +267,13 @@ const CERT_LOGO: Record<string, string> = {
   "REACH Declaration":                      "/cert-logos/reach.png",
 };
 
-function SmallCertLogo({ name }: { name: string }) {
-  const logoPath = CERT_LOGO[name];
-  if (!logoPath) return <ShieldCheck className="h-4 w-4 text-[#00933e]" strokeWidth={1.5} />;
+function SmallCertLogo({ name, customLogoUrl }: { name: string; customLogoUrl?: string | null }) {
+  const [imgError, setImgError] = useState(false);
+  const logoPath = customLogoUrl || CERT_LOGO[name];
+  if (!logoPath || imgError) return <ShieldCheck className="h-4 w-4 text-[#00933e]" strokeWidth={1.5} />;
   return (
     // eslint-disable-next-line @next/next/no-img-element
-    <img
-      src={logoPath}
-      alt={name}
-      className="w-7 h-7 object-contain"
-      onError={(e) => {
-        e.currentTarget.style.display = "none";
-        const next = e.currentTarget.nextElementSibling as HTMLElement | null;
-        if (next) next.style.display = "flex";
-      }}
-    />
+    <img src={logoPath} alt={name} className="w-7 h-7 object-contain" onError={() => setImgError(true)} />
   );
 }
 
@@ -320,6 +312,11 @@ function SmallTimelineNode({ facility, isLast, index }: {
                 {normalizeProcessStage(facility.process_stage)}
               </span>
             )}
+            {(facility.facility_certifications ?? []).map((c, i) => (
+              <span key={i} className="text-[6.5px] font-mono text-[#555] border border-[#e0e0e0] rounded px-1 py-0.5">
+                {c}
+              </span>
+            ))}
             {facility.website_url && (
               <span className="text-[7px] text-[#0e6dea] underline truncate max-w-[80px]">Visit website</span>
             )}
@@ -778,10 +775,14 @@ export function LivePassportPreview({
                         <div key={i}>
                           <div className={`bg-white border rounded-xl p-2.5 flex items-center gap-2 ${isEvidenced ? "border-[#e8e8e8]" : "border-red-200 opacity-70"}`}>
                             <div className="w-7 h-7 rounded-lg bg-[#f5f5f3] flex items-center justify-center shrink-0 overflow-hidden">
-                              <SmallCertLogo name={cert.certification_name} />
-                              <ShieldCheck className="h-4 w-4 text-[#00933e] hidden" strokeWidth={1.5} />
+                              <SmallCertLogo name={cert.certification_name} customLogoUrl={cert.custom_logo_url} />
                             </div>
-                            <p className="text-[9.5px] font-medium text-[#333] leading-snug flex-1 min-w-0 truncate">{cert.certification_name}</p>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-[9.5px] font-medium text-[#333] leading-snug truncate">{cert.certification_name}</p>
+                              {cert.description && (
+                                <p className="text-[8px] text-[#8b8b8b] leading-snug mt-0.5 line-clamp-2">{cert.description}</p>
+                              )}
+                            </div>
                           </div>
                           {!isEvidenced && (
                             <p className="text-[7.5px] text-red-600 mt-0.5 px-1">Upload certificate or add URL to show on passport</p>
