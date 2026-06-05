@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useWizardStore } from "@/stores/wizardStore";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ChevronDown, ChevronUp, Plus, Trash2 } from "lucide-react";
+import { ChevronDown, ChevronUp, Plus, Trash2, X } from "lucide-react";
 import type { WizardCareInstruction } from "@/types/wizard";
 import { CareSymbolIcon } from "@/components/shared/care-icons";
 
@@ -62,15 +62,12 @@ type CareMemoryEntry = { type: string; instruction: string };
 
 function useCareMemory() {
   const [memory, setMemory] = useState<CareMemoryEntry[]>([]);
-  // Track whether the initial localStorage load has completed
-  const loaded = useRef(false);
 
   useEffect(() => {
     try {
       const raw = localStorage.getItem(CARE_MEMORY_KEY);
       if (raw) setMemory(JSON.parse(raw));
     } catch { /* ignore */ }
-    loaded.current = true;
   }, []);
 
   function saveInstruction(entry: CareMemoryEntry) {
@@ -83,29 +80,22 @@ function useCareMemory() {
     });
   }
 
-  return { memory, saveInstruction, loaded };
+  function deleteFromMemory(instruction: string) {
+    setMemory((prev) => {
+      const updated = prev.filter((m) => m.instruction !== instruction);
+      try { localStorage.setItem(CARE_MEMORY_KEY, JSON.stringify(updated)); } catch { /* ignore */ }
+      return updated;
+    });
+  }
+
+  return { memory, saveInstruction, deleteFromMemory };
 }
 
 // ── Main component ────────────────────────────────────────────────────────────
 
 export function Step6Care() {
   const { step6, setStep6 } = useWizardStore();
-  const { memory, saveInstruction, loaded } = useCareMemory();
-
-  // Persist custom instructions to memory whenever the list changes.
-  // This catches saves that happen without a blur (e.g. navigating away,
-  // clicking a quick-chip after typing, or the wizard auto-saving).
-  // `loaded.current` guards against running before localStorage is read.
-  useEffect(() => {
-    if (!loaded.current) return;
-    step6.care_instructions.forEach((c) => {
-      if (c.instruction.trim() && !PREDEFINED_INSTRUCTIONS.has(c.instruction)) {
-        saveInstruction({ type: c.type, instruction: c.instruction });
-      }
-    });
-    // saveInstruction is stable (uses setMemory functional form); omitting from deps is safe
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [step6.care_instructions]);
+  const { memory, saveInstruction, deleteFromMemory } = useCareMemory();
 
   function addCare() {
     setStep6({
@@ -184,19 +174,34 @@ export function Step6Care() {
             {memory.map((m, i) => {
               const added = step6.care_instructions.some((c) => c.instruction === m.instruction);
               return (
-                <button
+                <div
                   key={i}
-                  onClick={() => addQuickCare(m.type, m.instruction)}
-                  disabled={added}
-                  className={`flex items-center gap-1.5 text-[10px] px-2.5 py-1 rounded-full border transition-colors ${
+                  className={`flex items-center gap-1 text-[10px] pl-2 pr-1 py-1 rounded-full border transition-colors ${
                     added
-                      ? "border-black/20 bg-[#F4F4F2] text-[#525252] cursor-default"
-                      : "border-[#E8E8E6] text-[#525252] hover:border-black/30 hover:text-black"
+                      ? "border-black/20 bg-[#F4F4F2] text-[#525252]"
+                      : "border-[#E8E8E6] text-[#525252]"
                   }`}
                 >
-                  <CareSymbolIcon type={m.type} className="w-3 h-3" />
-                  {added ? "✓ " : ""}{m.instruction}
-                </button>
+                  {/* Click the label/icon area to add */}
+                  <button
+                    type="button"
+                    onClick={() => addQuickCare(m.type, m.instruction)}
+                    disabled={added}
+                    className="flex items-center gap-1.5 disabled:cursor-default hover:text-black transition-colors"
+                  >
+                    <CareSymbolIcon type={m.type} className="w-3 h-3 shrink-0" />
+                    {added ? "✓ " : ""}{m.instruction}
+                  </button>
+                  {/* Delete from memory */}
+                  <button
+                    type="button"
+                    onClick={() => deleteFromMemory(m.instruction)}
+                    className="ml-0.5 p-0.5 rounded-full text-[#BDBDBB] hover:text-red-500 hover:bg-red-50 transition-colors shrink-0"
+                    aria-label="Remove from previously used"
+                  >
+                    <X className="w-2.5 h-2.5" />
+                  </button>
+                </div>
               );
             })}
           </div>
