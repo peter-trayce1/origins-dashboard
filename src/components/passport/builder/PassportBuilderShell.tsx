@@ -320,6 +320,7 @@ function buildPayload(store: ReturnType<typeof useWizardStore.getState>) {
     collection_name: s1.collection_name || null,
     product_description: s1.product_description || null,
     product_url: s1.product_url || null,
+    similar_products: s1.similar_products ?? [],
     primary_image_url: s1.primary_image_url || null,
     additional_image_urls: s1.additional_image_urls,
     manufacturing_date: s1.manufacturing_date

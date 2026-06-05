@@ -138,6 +138,7 @@ interface PassportData {
     url: string | null;
   }[];
   impact_metrics: ImpactMetric[];
+  similar_products: { name: string; image_url: string; url: string; rrp: string }[] | null;
   warranty_info: string | null;
   repairability_score: number | null;
   spare_parts_available: boolean;
@@ -1174,6 +1175,35 @@ export function PublicPassportPage({ passport, previewMode = false }: { passport
                 <p className="text-sm text-[#444] leading-relaxed">
                   {passport.consumer_transparency_summary}
                 </p>
+              </div>
+            )}
+
+            {/* Similar products strip */}
+            {(passport.similar_products ?? []).filter(p => p.name || p.image_url).length > 0 && (
+              <div className="bg-white border-t border-[#f0f0ee] mt-0.5">
+                <p className="px-5 pt-5 pb-3 text-[10px] font-mono uppercase tracking-widest text-[#8b8b8b]">
+                  Similar products
+                </p>
+                <div className="px-5 pb-5 flex gap-3 overflow-x-auto" style={{ scrollbarWidth: "none" }}>
+                  {(passport.similar_products ?? []).filter(p => p.name || p.image_url).map((p, i) => (
+                    <a
+                      key={i}
+                      href={p.url || undefined}
+                      target={p.url ? "_blank" : undefined}
+                      rel={p.url ? "noopener noreferrer" : undefined}
+                      className={`shrink-0 w-36 group ${p.url ? "cursor-pointer" : ""}`}
+                    >
+                      <div className="w-36 h-36 rounded-2xl bg-[#f5f5f3] overflow-hidden mb-2 border border-[#e8e8e8] group-hover:border-[#ccc] transition-colors">
+                        {p.image_url ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={p.image_url} alt={p.name} className="w-full h-full object-cover" />
+                        ) : null}
+                      </div>
+                      <p className="text-sm text-[#333] leading-snug line-clamp-2 group-hover:text-black transition-colors">{p.name}</p>
+                      {p.rrp && <p className="text-xs font-medium text-[#0e6dea] mt-1">{p.rrp}</p>}
+                    </a>
+                  ))}
+                </div>
               </div>
             )}
 

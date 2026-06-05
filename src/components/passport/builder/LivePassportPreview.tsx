@@ -623,6 +623,27 @@ export function LivePassportPreview({
                   </div>
                 )}
 
+                {/* Similar products strip */}
+                {(s1.similar_products ?? []).filter(p => p.name || p.image_url).length > 0 && (
+                  <div className="px-3 py-3 bg-white border-t border-[#f0f0ee] mt-0.5">
+                    <p className="text-[7px] font-mono uppercase tracking-widest text-[#8b8b8b] mb-2">Similar products</p>
+                    <div className="flex gap-2 overflow-x-auto" style={{ scrollbarWidth: "none" }}>
+                      {(s1.similar_products ?? []).filter(p => p.name || p.image_url).map((p, i) => (
+                        <div key={i} className="shrink-0 w-[72px]">
+                          <div className="w-[72px] h-[72px] rounded-lg bg-[#F4F4F3] overflow-hidden mb-1 border border-[#e8e8e8]">
+                            {p.image_url ? (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img src={p.image_url} alt={p.name} className="w-full h-full object-cover" />
+                            ) : null}
+                          </div>
+                          <p className="text-[8px] text-[#333] leading-tight line-clamp-2">{p.name}</p>
+                          {p.rrp && <p className="text-[7.5px] text-[#0e6dea] font-medium mt-0.5">{p.rrp}</p>}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 {!s1.product_name && !s1.product_description && (
                   <div className="px-4 py-8 text-center">
                     <p className="text-[8px] text-[#BDBDBB]">Fill in product details to see a preview.</p>

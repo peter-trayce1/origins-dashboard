@@ -1,5 +1,12 @@
 import type { ConfidenceLevel } from "./passport";
 
+export interface SimilarProduct {
+  name: string;
+  image_url: string;
+  url: string;
+  rrp: string;
+}
+
 export interface WizardMaterial {
   id?: string;
   material_name: string;
@@ -118,6 +125,7 @@ export interface WizardStep1 {
   country_of_origin: string;
   product_weight_g: number | "";
   product_lifetime_years: number | "";
+  similar_products: SimilarProduct[];
 }
 
 export interface WizardStep2 {

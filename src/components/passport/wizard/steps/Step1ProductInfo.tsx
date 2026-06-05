@@ -6,7 +6,8 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Upload, X, Loader2, ChevronDown, Lock } from "lucide-react";
+import { Upload, X, Loader2, ChevronDown, Lock, Plus, Trash2 } from "lucide-react";
+import type { SimilarProduct } from "@/types/wizard";
 
 const CATEGORIES = [
   "T-shirts & Tops", "Shirts & Blouses", "Knitwear", "Outerwear", "Coats & Jackets", "Dresses",
@@ -301,6 +302,157 @@ export function Step1ProductInfo() {
           <Input className="h-8 text-[13px]" type="url" placeholder="https://yourbrand.com/products/…" value={step1.product_url} onChange={(e) => update("product_url", e.target.value)} />
         </Field>
       </FieldGroup>
+
+      {/* Similar products (upsell strip) */}
+      <FieldGroup title="Similar products" defaultOpen={false}>
+        <p className="text-[11px] text-[#8C8C8C] -mt-1 mb-3">
+          Add up to 4 products — shown as a swipeable strip at the bottom of this passport. Each card shows the image, name, and optional price.
+        </p>
+        <SimilarProductsEditor
+          items={step1.similar_products ?? []}
+          onChange={(items) => setStep1({ similar_products: items })}
+        />
+      </FieldGroup>
+    </div>
+  );
+}
+
+// ── Similar products editor ───────────────────────────────────────────────────
+
+function SimilarProductsEditor({
+  items,
+  onChange,
+}: {
+  items: SimilarProduct[];
+  onChange: (items: SimilarProduct[]) => void;
+}) {
+  function add() {
+    if (items.length >= 4) return;
+    onChange([...items, { name: "", image_url: "", url: "", rrp: "" }]);
+  }
+
+  function remove(idx: number) {
+    onChange(items.filter((_, i) => i !== idx));
+  }
+
+  function update(idx: number, field: keyof SimilarProduct, value: string) {
+    onChange(items.map((item, i) => i === idx ? { ...item, [field]: value } : item));
+  }
+
+  return (
+    <div className="space-y-3">
+      {items.map((item, idx) => (
+        <SimilarProductCard
+          key={idx}
+          item={item}
+          index={idx}
+          onUpdate={(field, value) => update(idx, field, value)}
+          onRemove={() => remove(idx)}
+        />
+      ))}
+      {items.length < 4 && (
+        <button
+          type="button"
+          onClick={add}
+          className="w-full h-8 flex items-center justify-center gap-1.5 border border-dashed border-[#E8E8E6] rounded-xl text-[11px] text-[#525252] hover:border-black/25 hover:bg-[#FAFAF8] transition-colors"
+        >
+          <Plus className="h-3.5 w-3.5" />
+          Add product {items.length > 0 ? `(${items.length}/4)` : ""}
+        </button>
+      )}
+    </div>
+  );
+}
+
+function SimilarProductCard({
+  item,
+  index,
+  onUpdate,
+  onRemove,
+}: {
+  item: SimilarProduct;
+  index: number;
+  onUpdate: (field: keyof SimilarProduct, value: string) => void;
+  onRemove: () => void;
+}) {
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
+
+  async function handleImageFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    try {
+      const form = new FormData();
+      form.append("file", file);
+      const res = await fetch("/api/upload/image", { method: "POST", body: form });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Upload failed");
+      onUpdate("image_url", data.url);
+    } catch (err) {
+      console.error("Image upload failed:", err);
+    } finally {
+      setUploading(false);
+      if (fileRef.current) fileRef.current.value = "";
+    }
+  }
+
+  return (
+    <div className="border border-[#E8E8E6] rounded-xl p-3 space-y-2.5">
+      <div className="flex items-center justify-between">
+        <span className="text-[10px] font-semibold text-[#525252] uppercase tracking-wide">Product {index + 1}</span>
+        <button type="button" onClick={onRemove} className="p-1 rounded hover:bg-red-50 text-[#8C8C8C] hover:text-red-600 transition-colors">
+          <Trash2 className="h-3.5 w-3.5" />
+        </button>
+      </div>
+
+      {/* Image */}
+      <div className="flex items-center gap-3">
+        <div className="w-14 h-14 rounded-lg border border-[#E8E8E6] bg-[#F9F9F8] overflow-hidden shrink-0 flex items-center justify-center">
+          {item.image_url ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={item.image_url} alt="" className="w-full h-full object-cover" />
+          ) : (
+            <Upload className="h-4 w-4 text-[#BDBDBB]" />
+          )}
+        </div>
+        <div className="flex-1 space-y-1">
+          <Label className="text-[10px] font-medium text-[#8C8C8C]">Product image</Label>
+          <div className="flex gap-1.5">
+            <button
+              type="button"
+              disabled={uploading}
+              onClick={() => fileRef.current?.click()}
+              className="h-7 px-2.5 flex items-center gap-1 border border-[#E8E8E6] rounded-lg text-[11px] text-[#525252] hover:bg-[#F5F5F3] transition-colors disabled:opacity-50"
+            >
+              {uploading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Upload className="h-3 w-3" />}
+              {uploading ? "Uploading…" : "Upload"}
+            </button>
+            {item.image_url && (
+              <button type="button" onClick={() => onUpdate("image_url", "")} className="h-7 px-2 text-[#8C8C8C] hover:text-red-600 transition-colors">
+                <X className="h-3 w-3" />
+              </button>
+            )}
+          </div>
+        </div>
+        <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleImageFile} />
+      </div>
+
+      {/* Name + URL */}
+      <div className="space-y-1">
+        <Label className="text-[10px] font-medium text-[#8C8C8C]">Product name *</Label>
+        <Input className="h-8 text-[13px]" placeholder="e.g. The Slim Fit Chino" value={item.name} onChange={(e) => onUpdate("name", e.target.value)} />
+      </div>
+      <div className="space-y-1">
+        <Label className="text-[10px] font-medium text-[#8C8C8C]">Link URL *</Label>
+        <Input className="h-8 text-[13px]" type="url" placeholder="https://yourbrand.com/products/…" value={item.url} onChange={(e) => onUpdate("url", e.target.value)} />
+      </div>
+      <div className="space-y-1">
+        <Label className="text-[10px] font-medium text-[#8C8C8C]">
+          RRP <span className="font-normal text-[#BDBDBB]">Optional</span>
+        </Label>
+        <Input className="h-8 text-[13px]" placeholder="e.g. £89 or $120" value={item.rrp} onChange={(e) => onUpdate("rrp", e.target.value)} />
+      </div>
     </div>
   );
 }
