@@ -51,8 +51,9 @@ const CARE_CHIPS: { category: string; items: { type: string; instruction: string
 ];
 
 // ── Care instruction memory (localStorage, custom instructions only) ──────────
+// v2 key intentionally clears any old partial-save data from earlier versions.
 
-const CARE_MEMORY_KEY = "origins_care_memory_v1";
+const CARE_MEMORY_KEY = "origins_care_memory_v2";
 
 const PREDEFINED_INSTRUCTIONS = new Set(
   CARE_CHIPS.flatMap((g) => g.items.map((i) => i.instruction))
@@ -96,6 +97,22 @@ function useCareMemory() {
 export function Step6Care() {
   const { step6, setStep6 } = useWizardStore();
   const { memory, saveInstruction, deleteFromMemory } = useCareMemory();
+
+  // Save custom care instructions to memory only when the passport is successfully
+  // saved to the database. Reading via getState() avoids stale closure issues.
+  // This never fires mid-typing — only after the auto-save debounce completes.
+  const lastSaved = useWizardStore((s) => s.lastSaved);
+  useEffect(() => {
+    if (!lastSaved) return;
+    const instructions = useWizardStore.getState().step6.care_instructions;
+    instructions.forEach((c) => {
+      if (c.instruction.trim() && !PREDEFINED_INSTRUCTIONS.has(c.instruction)) {
+        saveInstruction({ type: c.type, instruction: c.instruction });
+      }
+    });
+    // saveInstruction uses functional setMemory so it's safe to omit from deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lastSaved]);
 
   function addCare() {
     setStep6({
