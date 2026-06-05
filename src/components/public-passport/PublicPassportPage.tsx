@@ -984,8 +984,18 @@ export function PublicPassportPage({ passport, previewMode = false }: { passport
     "Contains recycled content", "Renewable energy used in production",
     "Fair wages paid", "Zero waste manufacturing",
   ]);
-  const verifiedClaims = claims.filter((c) => EVIDENCE_REQUIRED_CLAIM_SET.has(c) && evidenceUrls[c]);
-  const selfDeclaredClaims = claims.filter((c) => !EVIDENCE_REQUIRED_CLAIM_SET.has(c));
+  // Verified = predefined evidence-required claim WITH url, OR custom claim that has a key in
+  // evidenceUrls (even "") AND a non-empty url — matches builder categorisation logic exactly.
+  const verifiedClaims = claims.filter(
+    (c) =>
+      (EVIDENCE_REQUIRED_CLAIM_SET.has(c) || Object.prototype.hasOwnProperty.call(evidenceUrls, c)) &&
+      evidenceUrls[c]
+  );
+  const selfDeclaredClaims = claims.filter(
+    (c) =>
+      !EVIDENCE_REQUIRED_CLAIM_SET.has(c) &&
+      !Object.prototype.hasOwnProperty.call(evidenceUrls, c)
+  );
 
   const nextTab = TAB_SEQUENCE[TAB_SEQUENCE.indexOf(activeTab) + 1] ?? null;
 

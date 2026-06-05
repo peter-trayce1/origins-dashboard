@@ -725,11 +725,18 @@ export function LivePassportPreview({
                     "Contains recycled content", "Renewable energy used in production",
                     "Fair wages paid", "Zero waste manufacturing",
                   ]);
+                  // Verified = predefined evidence-required claim WITH url, OR custom claim that
+                  // has a key in claim_evidence_urls (even "") AND has a non-empty url.
                   const verifiedClaims = s4.sustainability_claims.filter(
-                    (c) => EVIDENCE_REQUIRED.has(c) && s4.claim_evidence_urls[c]
+                    (c) =>
+                      (EVIDENCE_REQUIRED.has(c) || Object.prototype.hasOwnProperty.call(s4.claim_evidence_urls, c)) &&
+                      s4.claim_evidence_urls[c]
                   );
+                  // Self-declared = no key in claim_evidence_urls and not a predefined verified claim
                   const selfDeclaredClaims = s4.sustainability_claims.filter(
-                    (c) => !EVIDENCE_REQUIRED.has(c)
+                    (c) =>
+                      !EVIDENCE_REQUIRED.has(c) &&
+                      !Object.prototype.hasOwnProperty.call(s4.claim_evidence_urls, c)
                   );
                   return (
                     <>

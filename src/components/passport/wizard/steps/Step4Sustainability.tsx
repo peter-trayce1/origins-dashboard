@@ -11,7 +11,7 @@ import { Switch } from "@/components/ui/switch";
 import {
   AlertTriangle, ShieldCheck, Leaf, Wind, Droplets, Zap,
   Plus, Trash2, ChevronDown, ChevronUp, Truck, RefreshCw,
-  Package, TreePine, Wrench, BarChart3, Paperclip, Check, Shield, EyeOff, Info, Loader2,
+  Package, TreePine, Wrench, BarChart3, Paperclip, Check, Shield, EyeOff, Info, Loader2, X,
 } from "lucide-react";
 import type { WizardImpactMetric, MetricType, VerificationStatus, CoreMetricMeta } from "@/types/wizard";
 
@@ -855,9 +855,15 @@ function MetricCard({
   );
 }
 
+// Frozen sets for fast membership checks
+const EVIDENCE_REQUIRED_SET = new Set(EVIDENCE_REQUIRED_CLAIMS);
+const SELF_DECLARED_SET = new Set(SELF_DECLARED_CLAIMS);
+
 export function Step4Sustainability() {
   const { step4, setStep4 } = useWizardStore();
   const [expandedMetricIdx, setExpandedMetricIdx] = useState<number | null>(null);
+  const [customVerifiedInput, setCustomVerifiedInput] = useState("");
+  const [customSelfInput, setCustomSelfInput] = useState("");
 
   function toggleClaim(claim: string) {
     const current = step4.sustainability_claims;
@@ -878,6 +884,47 @@ export function Step4Sustainability() {
   }
 
   const isChecked = (claim: string) => step4.sustainability_claims.includes(claim);
+
+  // Custom claim helpers
+  // A claim is "verified type" if it has a key in claim_evidence_urls (even empty string).
+  const isVerifiedType = (claim: string) =>
+    EVIDENCE_REQUIRED_SET.has(claim) || Object.prototype.hasOwnProperty.call(step4.claim_evidence_urls, claim);
+
+  const customVerifiedClaims = step4.sustainability_claims.filter(
+    (c) => !EVIDENCE_REQUIRED_SET.has(c) && Object.prototype.hasOwnProperty.call(step4.claim_evidence_urls, c)
+  );
+  const customSelfDeclaredClaims = step4.sustainability_claims.filter(
+    (c) => !EVIDENCE_REQUIRED_SET.has(c) && !SELF_DECLARED_SET.has(c) &&
+           !Object.prototype.hasOwnProperty.call(step4.claim_evidence_urls, c)
+  );
+
+  function addCustomVerifiedClaim() {
+    const claim = customVerifiedInput.trim();
+    if (!claim || step4.sustainability_claims.includes(claim)) { setCustomVerifiedInput(""); return; }
+    setStep4({
+      sustainability_claims: [...step4.sustainability_claims, claim],
+      claim_evidence_urls: { ...step4.claim_evidence_urls, [claim]: "" },
+    });
+    setCustomVerifiedInput("");
+  }
+
+  function addCustomSelfClaim() {
+    const claim = customSelfInput.trim();
+    if (!claim || step4.sustainability_claims.includes(claim)) { setCustomSelfInput(""); return; }
+    setStep4({ sustainability_claims: [...step4.sustainability_claims, claim] });
+    setCustomSelfInput("");
+  }
+
+  function removeCustomClaim(claim: string) {
+    const urls = { ...step4.claim_evidence_urls };
+    delete urls[claim];
+    setStep4({
+      sustainability_claims: step4.sustainability_claims.filter((c) => c !== claim),
+      claim_evidence_urls: urls,
+    });
+  }
+
+  void isVerifiedType; // used in public passport logic, suppress unused warning
 
   function addMetric(template?: typeof METRIC_TEMPLATES[0]) {
     const newMetric: WizardImpactMetric = {
@@ -1067,6 +1114,7 @@ export function Step4Sustainability() {
             <span className="text-[9px] text-[#8C8C8C] ml-0.5">— evidence link required</span>
           </div>
           <div className="space-y-1.5">
+            {/* Predefined verified claims */}
             {EVIDENCE_REQUIRED_CLAIMS.map((claim) => {
               const checked = isChecked(claim);
               return (
@@ -1107,6 +1155,75 @@ export function Step4Sustainability() {
                 </div>
               );
             })}
+
+            {/* Custom verified claims */}
+            {customVerifiedClaims.map((claim) => {
+              const checked = isChecked(claim);
+              return (
+                <div
+                  key={claim}
+                  className={`rounded-xl border transition-colors ${checked ? "border-emerald-200 bg-emerald-50" : "border-[#E8E8E6]"}`}
+                >
+                  <label className="flex items-start gap-2.5 p-3 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      className="mt-0.5 rounded w-4 h-4 shrink-0 accent-emerald-600"
+                      checked={checked}
+                      onChange={() => toggleClaim(claim)}
+                    />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-1.5">
+                        <ShieldCheck className="h-3 w-3 text-emerald-600 shrink-0" />
+                        <span className="text-[12px] font-medium text-black flex-1">{claim}</span>
+                        <button
+                          type="button"
+                          onClick={(e) => { e.preventDefault(); removeCustomClaim(claim); }}
+                          className="p-0.5 text-[#8C8C8C] hover:text-red-500 transition-colors shrink-0"
+                          aria-label="Remove claim"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </div>
+                      {checked && (
+                        <div className="mt-2 space-y-1">
+                          <Label className="text-[10px] font-medium text-[#8C8C8C]">Evidence URL or document link *</Label>
+                          <Input
+                            className="h-7 text-[11px]"
+                            type="url"
+                            placeholder="https://… (certificate, audit report, verification)"
+                            value={step4.claim_evidence_urls[claim] ?? ""}
+                            onChange={(e) => setEvidenceUrl(claim, e.target.value)}
+                            onClick={(e) => e.stopPropagation()}
+                          />
+                          {!step4.claim_evidence_urls[claim] && (
+                            <p className="text-[10px] text-amber-700">Add evidence to make this claim credible on the public passport</p>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </label>
+                </div>
+              );
+            })}
+
+            {/* Add custom verified claim */}
+            <div className="flex gap-2 pt-0.5">
+              <Input
+                className="h-8 text-[12px] flex-1"
+                placeholder="Add a custom verified claim…"
+                value={customVerifiedInput}
+                onChange={(e) => setCustomVerifiedInput(e.target.value)}
+                onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addCustomVerifiedClaim(); } }}
+              />
+              <button
+                type="button"
+                onClick={addCustomVerifiedClaim}
+                disabled={!customVerifiedInput.trim()}
+                className="flex items-center gap-1 h-8 px-3 rounded-lg border border-[#E8E8E6] text-[11px] font-medium text-[#525252] hover:border-black/20 hover:text-black transition-colors disabled:opacity-40 disabled:cursor-not-allowed shrink-0"
+              >
+                <Plus className="h-3 w-3" />Add
+              </button>
+            </div>
           </div>
         </div>
 
@@ -1118,6 +1235,7 @@ export function Step4Sustainability() {
             <span className="text-[9px] text-[#8C8C8C] ml-0.5">— no evidence required</span>
           </div>
           <div className="grid grid-cols-1 gap-1.5">
+            {/* Predefined self-declared claims */}
             {SELF_DECLARED_CLAIMS.map((claim) => {
               const checked = isChecked(claim);
               return (
@@ -1137,6 +1255,54 @@ export function Step4Sustainability() {
                 </label>
               );
             })}
+
+            {/* Custom self-declared claims */}
+            {customSelfDeclaredClaims.map((claim) => {
+              const checked = isChecked(claim);
+              return (
+                <div
+                  key={claim}
+                  className={`flex items-center gap-2.5 p-2.5 rounded-xl border transition-colors ${
+                    checked ? "border-[#D0D0CE] bg-[#F7F6F4]" : "border-[#E8E8E6]"
+                  }`}
+                >
+                  <input
+                    type="checkbox"
+                    className="rounded w-4 h-4 shrink-0 cursor-pointer"
+                    checked={checked}
+                    onChange={() => toggleClaim(claim)}
+                  />
+                  <span className="text-[12px] text-[#444] flex-1">{claim}</span>
+                  <button
+                    type="button"
+                    onClick={() => removeCustomClaim(claim)}
+                    className="p-0.5 text-[#8C8C8C] hover:text-red-500 transition-colors shrink-0"
+                    aria-label="Remove claim"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </div>
+              );
+            })}
+
+            {/* Add custom self-declared claim */}
+            <div className="flex gap-2 pt-0.5">
+              <Input
+                className="h-8 text-[12px] flex-1"
+                placeholder="Add a custom self-declared claim…"
+                value={customSelfInput}
+                onChange={(e) => setCustomSelfInput(e.target.value)}
+                onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addCustomSelfClaim(); } }}
+              />
+              <button
+                type="button"
+                onClick={addCustomSelfClaim}
+                disabled={!customSelfInput.trim()}
+                className="flex items-center gap-1 h-8 px-3 rounded-lg border border-[#E8E8E6] text-[11px] font-medium text-[#525252] hover:border-black/20 hover:text-black transition-colors disabled:opacity-40 disabled:cursor-not-allowed shrink-0"
+              >
+                <Plus className="h-3 w-3" />Add
+              </button>
+            </div>
           </div>
         </div>
 
