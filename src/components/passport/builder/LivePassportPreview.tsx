@@ -626,7 +626,7 @@ export function LivePassportPreview({
                 {/* Similar products strip */}
                 {(s1.similar_products ?? []).filter(p => p.name || p.image_url).length > 0 && (
                   <div className="px-3 py-3 bg-white border-t border-[#f0f0ee] mt-0.5">
-                    <p className="text-[7px] font-mono uppercase tracking-widest text-[#8b8b8b] mb-2">Similar products</p>
+                    <p className="text-[7px] font-mono uppercase tracking-widest text-[#8b8b8b] mb-2">You might also like</p>
                     <div className="flex gap-2 overflow-x-auto" style={{ scrollbarWidth: "none" }}>
                       {(s1.similar_products ?? []).filter(p => p.name || p.image_url).map((p, i) => (
                         <div key={i} className="shrink-0 w-[72px]">

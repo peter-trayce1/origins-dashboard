@@ -1182,7 +1182,7 @@ export function PublicPassportPage({ passport, previewMode = false }: { passport
             {(passport.similar_products ?? []).filter(p => p.name || p.image_url).length > 0 && (
               <div className="bg-white border-t border-[#f0f0ee] mt-0.5">
                 <p className="px-5 pt-5 pb-3 text-[10px] font-mono uppercase tracking-widest text-[#8b8b8b]">
-                  Similar products
+                  We think you might also like these products
                 </p>
                 <div className="px-5 pb-5 flex gap-3 overflow-x-auto" style={{ scrollbarWidth: "none" }}>
                   {(passport.similar_products ?? []).filter(p => p.name || p.image_url).map((p, i) => (
