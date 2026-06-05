@@ -7,7 +7,7 @@ import {
   Eye,
   Plus,
   Upload,
-  Sparkles,
+  Send,
   ArrowRight,
   TrendingUp,
   Clock,
@@ -184,10 +184,10 @@ export default async function DashboardPage() {
               href: "/bulk-upload",
             },
             {
-              label: "AI Passport Generator",
-              description: "Generate passport content with AI",
-              icon: Sparkles,
-              href: "/ai-generator",
+              label: "Supply chain requests",
+              description: "Request data directly from your suppliers",
+              icon: Send,
+              href: "/supply-chain-requests",
             },
           ].map((action) => {
             const Icon = action.icon;
