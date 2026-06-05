@@ -148,7 +148,6 @@ function useSupplierMemory() {
 
   function saveSupplier(f: WizardFacility) {
     if (!f.facility_name) return;
-    // Save every field except the DB-specific ids
     const entry: SupplierMemoryEntry = {
       facility_name:           f.facility_name,
       tier:                    f.tier,
@@ -162,6 +161,7 @@ function useSupplierMemory() {
       facility_certifications: f.facility_certifications,
     };
     setMemory((prev) => {
+      // Always replace the old entry for this supplier name with the latest data
       const deduped = prev.filter((m) => m.facility_name !== f.facility_name);
       const updated = [entry, ...deduped].slice(0, 20);
       try { localStorage.setItem(MEMORY_KEY, JSON.stringify(updated)); } catch { /* ignore */ }
@@ -169,7 +169,15 @@ function useSupplierMemory() {
     });
   }
 
-  return { memory, saveSupplier };
+  function deleteFromMemory(facilityName: string) {
+    setMemory((prev) => {
+      const updated = prev.filter((m) => m.facility_name !== facilityName);
+      try { localStorage.setItem(MEMORY_KEY, JSON.stringify(updated)); } catch { /* ignore */ }
+      return updated;
+    });
+  }
+
+  return { memory, saveSupplier, deleteFromMemory };
 }
 
 const OWNERSHIP_OPTIONS = [
@@ -233,7 +241,7 @@ function SupplyChainMap({ facilities }: { facilities: WizardFacility[] }) {
 export function Step3SupplyChain() {
   const { step3, setStep3 } = useWizardStore();
   const facilities = step3.facilities;
-  const { memory, saveSupplier } = useSupplierMemory();
+  const { memory, saveSupplier, deleteFromMemory } = useSupplierMemory();
 
   function addFacility() {
     setStep3({ facilities: [...facilities, defaultFacility()] });
@@ -247,13 +255,22 @@ export function Step3SupplyChain() {
     setStep3({ facilities: facilities.map((f, i) => i === idx ? { ...f, [field]: value } : f) });
   }
 
+  // For dropdown fields: update state AND immediately save the full record to memory.
+  // Dropdowns fire a single atomic event (not character-by-character), so saving here is safe.
+  function setFacilityAndSave(idx: number, field: keyof WizardFacility, value: unknown) {
+    const next = facilities.map((f, i) => i === idx ? { ...f, [field]: value } : f);
+    setStep3({ facilities: next });
+    if (next[idx].facility_name) saveSupplier(next[idx]);
+  }
+
   function setSupplierType(idx: number, supplierType: string) {
     const tier = SUPPLIER_TYPE_TO_TIER[supplierType] ?? 1;
-    setStep3({
-      facilities: facilities.map((f, i) =>
-        i === idx ? { ...f, process_stage: supplierType, tier } : f
-      ),
-    });
+    const next = facilities.map((f, i) =>
+      i === idx ? { ...f, process_stage: supplierType, tier } : f
+    );
+    setStep3({ facilities: next });
+    // Save immediately so the updated supplier type is persisted in memory
+    if (next[idx].facility_name) saveSupplier(next[idx]);
   }
 
   function addFacilityCert(idx: number) {
@@ -294,16 +311,33 @@ export function Step3SupplyChain() {
           <p className="text-[10px] text-[#8C8C8C] font-medium mb-2">Previously used suppliers</p>
           <div className="flex flex-wrap gap-1.5">
             {memory.map((m, i) => (
-              <button
+              <div
                 key={i}
-                type="button"
-                onClick={() => applyMemory(m)}
-                className="flex items-center gap-1 text-[10px] text-[#525252] border border-[#E8E8E6] rounded-full px-2.5 py-1 hover:bg-[#F5F5F3] hover:border-black/20 transition-colors"
+                className="flex items-center gap-0.5 text-[10px] text-[#525252] border border-[#E8E8E6] rounded-full pl-2 pr-1 py-1 hover:border-black/20 transition-colors"
               >
-                <MapPin className="h-2.5 w-2.5 text-[#8C8C8C]" />
-                {m.facility_name}
-                {m.country && <span className="ml-0.5">{COUNTRY_FLAGS[m.country] ?? ""}</span>}
-              </button>
+                {/* Click name/flag area to apply */}
+                <button
+                  type="button"
+                  onClick={() => applyMemory(m)}
+                  className="flex items-center gap-1 hover:text-black transition-colors"
+                >
+                  <MapPin className="h-2.5 w-2.5 text-[#8C8C8C]" />
+                  {m.facility_name}
+                  {m.country && <span className="ml-0.5">{COUNTRY_FLAGS[m.country] ?? ""}</span>}
+                  {m.process_stage && (
+                    <span className="text-[9px] text-[#8C8C8C] ml-0.5">· {m.process_stage}</span>
+                  )}
+                </button>
+                {/* Delete from memory */}
+                <button
+                  type="button"
+                  onClick={() => deleteFromMemory(m.facility_name)}
+                  className="ml-0.5 p-0.5 rounded-full text-[#BDBDBB] hover:text-red-500 hover:bg-red-50 transition-colors shrink-0"
+                  aria-label="Remove from previously used"
+                >
+                  <X className="h-2.5 w-2.5" />
+                </button>
+              </div>
             ))}
           </div>
         </div>
@@ -373,7 +407,10 @@ export function Step3SupplyChain() {
                 placeholder="e.g. Atelier Silva"
                 value={facility.facility_name}
                 onChange={(e) => updateFacility(idx, "facility_name", e.target.value)}
-                onBlur={() => { if (facility.facility_name) saveSupplier(facility); }}
+                onBlur={(e) => {
+                  const name = e.target.value;
+                  if (name) saveSupplier({ ...facility, facility_name: name });
+                }}
               />
             </div>
 
@@ -383,7 +420,7 @@ export function Step3SupplyChain() {
                 <Label className="text-[10px] font-medium text-[#8C8C8C]">Country *</Label>
                 <Select
                   value={facility.country}
-                  onValueChange={(v) => updateFacility(idx, "country", v)}
+                  onValueChange={(v) => setFacilityAndSave(idx, "country", v)}
                 >
                   <SelectTrigger className="h-8 text-[13px]">
                     <SelectValue placeholder="Select country" />
@@ -404,6 +441,9 @@ export function Step3SupplyChain() {
                   placeholder="e.g. Porto"
                   value={facility.city}
                   onChange={(e) => updateFacility(idx, "city", e.target.value)}
+                  onBlur={(e) => {
+                    if (facility.facility_name) saveSupplier({ ...facility, city: e.target.value });
+                  }}
                 />
               </div>
             </div>
@@ -419,6 +459,9 @@ export function Step3SupplyChain() {
                 placeholder="https://supplier.com"
                 value={facility.website_url}
                 onChange={(e) => updateFacility(idx, "website_url", e.target.value)}
+                onBlur={(e) => {
+                  if (facility.facility_name) saveSupplier({ ...facility, website_url: e.target.value });
+                }}
               />
             </div>
 
@@ -432,6 +475,9 @@ export function Step3SupplyChain() {
                 placeholder="e.g. Rua das Flores 12, Porto"
                 value={facility.facility_address}
                 onChange={(e) => updateFacility(idx, "facility_address", e.target.value)}
+                onBlur={(e) => {
+                  if (facility.facility_name) saveSupplier({ ...facility, facility_address: e.target.value });
+                }}
               />
             </div>
 
@@ -441,7 +487,7 @@ export function Step3SupplyChain() {
                 <Label className="text-[10px] font-medium text-[#8C8C8C]">Relationship</Label>
                 <Select
                   value={facility.ownership_relationship || ""}
-                  onValueChange={(v) => updateFacility(idx, "ownership_relationship", v as WizardFacility["ownership_relationship"])}
+                  onValueChange={(v) => setFacilityAndSave(idx, "ownership_relationship", v as WizardFacility["ownership_relationship"])}
                 >
                   <SelectTrigger className="h-8 text-[13px]">
                     <SelectValue placeholder="Select" />
@@ -457,7 +503,7 @@ export function Step3SupplyChain() {
                 <Label className="text-[10px] font-medium text-[#8C8C8C]">Data confidence</Label>
                 <Select
                   value={facility.confidence_level}
-                  onValueChange={(v) => updateFacility(idx, "confidence_level", v as WizardFacility["confidence_level"])}
+                  onValueChange={(v) => setFacilityAndSave(idx, "confidence_level", v as WizardFacility["confidence_level"])}
                 >
                   <SelectTrigger className="h-8 text-[13px]">
                     <SelectValue />
