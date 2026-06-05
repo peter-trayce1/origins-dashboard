@@ -56,14 +56,14 @@ function buildLabeledSvg(
 
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${canvasW}" height="${totalH}" viewBox="0 0 ${canvasW} ${totalH}">
   <rect width="${canvasW}" height="${totalH}" fill="#ffffff"/>
-  <text x="${cx}" y="29" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="18" font-weight="700" fill="#111111">${xe(trunc(productName, 40))}</text>
-  <text x="${cx}" y="47" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="9" fill="#aaaaaa">${xe("DIGITAL PRODUCT PASSPORT")}</text>
+  <text x="${cx}" y="29" text-anchor="middle" font-family="sans-serif" font-size="18" font-weight="700" fill="#111111">${xe(trunc(productName, 40))}</text>
+  <text x="${cx}" y="47" text-anchor="middle" font-family="sans-serif" font-size="9" fill="#aaaaaa">${xe("DIGITAL PRODUCT PASSPORT")}</text>
   <line x1="40" y1="56" x2="${canvasW - 40}" y2="56" stroke="#eeeeee" stroke-width="1"/>
   <svg x="40" y="${topPad}" width="${qrSize}" height="${qrSize}" viewBox="${vb}">
     ${innerPaths}
   </svg>
-  <text x="${cx}" y="${topPad + qrSize + 22}" text-anchor="middle" font-family="Courier New,Courier,monospace" font-size="13" font-weight="700" fill="#111111">${xe(passportCode)}</text>
-  <text x="${cx}" y="${topPad + qrSize + 40}" text-anchor="middle" font-family="Courier New,Courier,monospace" font-size="10" fill="#777777">${xe(trunc(targetUrl, 58))}</text>
+  <text x="${cx}" y="${topPad + qrSize + 22}" text-anchor="middle" font-family="monospace" font-size="13" font-weight="700" fill="#111111">${xe(passportCode)}</text>
+  <text x="${cx}" y="${topPad + qrSize + 40}" text-anchor="middle" font-family="monospace" font-size="10" fill="#777777">${xe(trunc(targetUrl, 58))}</text>
 </svg>`;
 }
 
