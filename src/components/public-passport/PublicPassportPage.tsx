@@ -890,15 +890,17 @@ function TimelineNode({
             <ConfidenceBadge level={facility.confidence_level} />
           )}
           {facility.website_url && (
-            <a
-              href={facility.website_url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="mt-3 inline-flex items-center gap-1.5 h-8 px-3 rounded-full border border-[#e8e8e8] text-xs font-medium text-[#333] hover:border-[#333] hover:bg-[#f5f5f3] transition-colors"
-            >
-              <ExternalLink className="h-3 w-3 text-[#8b8b8b]" />
-              Visit factory website
-            </a>
+            <div className="mt-3">
+              <a
+                href={facility.website_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 h-8 px-3 rounded-full border border-[#e8e8e8] text-xs font-medium text-[#333] hover:border-[#333] hover:bg-[#f5f5f3] transition-colors"
+              >
+                <ExternalLink className="h-3 w-3 text-[#8b8b8b]" />
+                Visit factory website
+              </a>
+            </div>
           )}
         </div>
       </div>
