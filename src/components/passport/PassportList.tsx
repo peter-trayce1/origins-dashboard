@@ -43,6 +43,7 @@ interface Passport {
   collection_name: string | null;
   passport_code: string | null;
   category: string | null;
+  season: string | null;
   updated_at: string;
   published_at: string | null;
   qr_codes: { id: string; scan_count: number }[];
@@ -345,6 +346,7 @@ export function PassportList({ initialPassports, brandId }: PassportListProps) {
                 </th>
                 <th className="text-left text-xs font-medium text-[#8C8C8C] px-4 py-3">Product</th>
                 <th className="hidden sm:table-cell text-left text-xs font-medium text-[#8C8C8C] px-4 py-3">Passport ID</th>
+                <th className="hidden lg:table-cell text-left text-xs font-medium text-[#8C8C8C] px-4 py-3">Season</th>
                 <th className="text-left text-xs font-medium text-[#8C8C8C] px-4 py-3">Status</th>
                 <th className="hidden md:table-cell text-left text-xs font-medium text-[#8C8C8C] px-4 py-3">Complete</th>
                 <th className="hidden lg:table-cell text-left text-xs font-medium text-[#8C8C8C] px-4 py-3">Scans</th>
@@ -406,6 +408,13 @@ export function PassportList({ initialPassports, brandId }: PassportListProps) {
                         </span>
                       ) : (
                         <span className="text-sm text-[#BDBDBB]">—</span>
+                      )}
+                    </td>
+                    <td className="hidden lg:table-cell px-4 py-3">
+                      {passport.season ? (
+                        <span className="text-xs text-[#525252]">{passport.season}</span>
+                      ) : (
+                        <span className="text-xs text-[#BDBDBB]">—</span>
                       )}
                     </td>
                     <td className="px-4 py-3">
@@ -492,7 +501,7 @@ export function PassportList({ initialPassports, brandId }: PassportListProps) {
                   </tr>
                   {qrOpen && (
                     <tr key={`${passport.id}-qr`} className="bg-[#F9F9F8]">
-                      <td colSpan={8} className="px-6 pb-4 pt-0">
+                      <td colSpan={9} className="px-6 pb-4 pt-0">
                         <div className="border border-[#E8E8E6] rounded-xl bg-white p-4 flex items-center gap-5">
                           {qrLoading ? (
                             <div className="flex items-center justify-center w-[104px] h-[104px]">

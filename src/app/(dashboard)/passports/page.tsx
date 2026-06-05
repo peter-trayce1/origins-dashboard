@@ -44,7 +44,7 @@ export default function PassportsPage() {
           .from("passports")
           .select(`
             id, product_name, sku, slug, status, completeness_score,
-            primary_image_url, collection_name, passport_code, category,
+            primary_image_url, collection_name, passport_code, category, season,
             updated_at, published_at,
             qr_codes(id, scan_count)
           `)
