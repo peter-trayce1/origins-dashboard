@@ -110,7 +110,7 @@ export function Step7Story() {
             <FileText className="h-3.5 w-3.5 text-[#525252]" />
           </div>
           <div>
-            <p className="text-[13px] font-semibold text-black">1. Product story</p>
+            <p className="text-[13px] font-semibold text-black">1. Our story</p>
             <p className="text-[11px] text-[#8C8C8C] mt-0.5">The story of this product — its origin, purpose and what makes it special.</p>
           </div>
         </div>
