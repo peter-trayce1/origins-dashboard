@@ -20,7 +20,9 @@ import {
   Loader2,
   Download,
   Package,
+  Pencil,
 } from "lucide-react";
+import { BulkEditPanel } from "@/components/passport/BulkEditPanel";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -64,6 +66,7 @@ export function PassportList({ initialPassports, brandId }: PassportListProps) {
   const [openQRId, setOpenQRId] = useState<string | null>(null);
   const [qrCache, setQRCache] = useState<Record<string, { id: string; target_url: string } | null>>({});
   const [loadingQRId, setLoadingQRId] = useState<string | null>(null);
+  const [bulkEditOpen, setBulkEditOpen] = useState(false);
 
   const filtered = passports.filter((p) => {
     const matchSearch =
@@ -257,6 +260,16 @@ export function PassportList({ initialPassports, brandId }: PassportListProps) {
             {selected.size} selected
           </span>
           <div className="flex items-center gap-2 ml-2">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setBulkEditOpen(true)}
+              disabled={isBulkWorking}
+              className="h-7 text-xs bg-[#0e6dea]/20 border-[#0e6dea]/40 text-white hover:bg-[#0e6dea]/30 hover:text-white"
+            >
+              <Pencil className="h-3.5 w-3.5 mr-1.5" />
+              Bulk edit
+            </Button>
             <Button
               size="sm"
               variant="outline"
@@ -555,6 +568,18 @@ export function PassportList({ initialPassports, brandId }: PassportListProps) {
           </table>
         )}
       </div>
+
+      <BulkEditPanel
+        open={bulkEditOpen}
+        onClose={() => setBulkEditOpen(false)}
+        selectedIds={[...selected]}
+        onSuccess={() => {
+          setBulkEditOpen(false);
+          setSelected(new Set());
+          // Reload the page to reflect updated passport data in the list
+          window.location.reload();
+        }}
+      />
     </div>
   );
 }
