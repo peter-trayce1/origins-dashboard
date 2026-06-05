@@ -324,6 +324,15 @@ export default async function DashboardPage() {
                 ))}
               </tbody>
             </table>
+            <div className="border-t border-[#E8E8E6] px-4 py-3 flex justify-center">
+              <Link
+                href="/passports"
+                className="inline-flex items-center gap-1.5 text-sm font-medium text-[#525252] hover:text-black transition-colors"
+              >
+                View all passports
+                <ArrowRight className="h-3.5 w-3.5" />
+              </Link>
+            </div>
           </div>
         )}
       </div>
