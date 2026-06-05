@@ -77,9 +77,9 @@ export default async function ManorsGolfPassportPage({
 
   if (!passport) notFound();
 
-  // Record scan non-blocking; scan_count maintained by DB trigger
+  // Record scan — must be awaited; fire-and-forget is killed by Vercel before the write completes
   const supabase = getServiceClient();
-  supabase.from("scans").insert({
+  await supabase.from("scans").insert({
     passport_id: passport.id,
     brand_id: passport.brand_id,
     qr_code_id: qrCodeId ?? null,

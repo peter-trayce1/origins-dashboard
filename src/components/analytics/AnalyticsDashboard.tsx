@@ -9,7 +9,18 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
-import { BarChart2, QrCode, Globe, Star } from "lucide-react";
+import { BarChart2, ExternalLink, FileText, QrCode, Globe, Star } from "lucide-react";
+import Link from "next/link";
+
+interface PassportDetail {
+  id: string;
+  name: string;
+  slug: string | null;
+  primaryImageUrl: string | null;
+  publishedAt: string | null;
+  allTimeScans: number;
+  thirtyDayScans: number;
+}
 
 interface AnalyticsData {
   totalScans: number;
@@ -19,6 +30,7 @@ interface AnalyticsData {
   topPassports: { name: string; count: number }[];
   deviceBreakdown: { device: string; count: number }[];
   avgCompleteness: number;
+  publishedPassportDetails: PassportDetail[];
 }
 
 interface Props {
@@ -113,7 +125,7 @@ export function AnalyticsDashboard({ data }: Props) {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Top passports */}
         <div className="border border-[#E8E8E6] rounded-xl p-5">
-          <p className="text-sm font-semibold text-black mb-4">Top passports by scans</p>
+          <p className="text-sm font-semibold text-black mb-4">Top passports by scans (30d)</p>
           {data.topPassports.length === 0 ? (
             <p className="text-sm text-[#8C8C8C]">No scan data yet.</p>
           ) : (
@@ -156,6 +168,80 @@ export function AnalyticsDashboard({ data }: Props) {
             </div>
           )}
         </div>
+      </div>
+
+      {/* Per-passport scan breakdown */}
+      <div className="border border-[#E8E8E6] rounded-xl bg-white overflow-hidden">
+        <div className="px-5 py-4 border-b border-[#E8E8E6]">
+          <p className="text-sm font-semibold text-black">Published passport visits</p>
+          <p className="text-xs text-[#8C8C8C] mt-0.5">All-time scans tracked per published passport. Each QR scan or direct URL visit counts as one.</p>
+        </div>
+
+        {data.publishedPassportDetails.length === 0 ? (
+          <div className="px-5 py-8 text-center">
+            <p className="text-sm text-[#8C8C8C]">No published passports yet. Publish a passport to start tracking visits.</p>
+          </div>
+        ) : (
+          <table className="w-full">
+            <thead>
+              <tr className="border-b border-[#E8E8E6]">
+                <th className="text-left text-xs font-medium text-[#8C8C8C] px-5 py-3">Passport</th>
+                <th className="text-right text-xs font-medium text-[#8C8C8C] px-5 py-3">30d scans</th>
+                <th className="text-right text-xs font-medium text-[#8C8C8C] px-5 py-3">All-time scans</th>
+                <th className="text-right text-xs font-medium text-[#8C8C8C] px-5 py-3 hidden sm:table-cell">View</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-[#E8E8E6]">
+              {data.publishedPassportDetails.map((p) => {
+                const maxScans = data.publishedPassportDetails[0]?.allTimeScans || 1;
+                const barWidth = Math.max(4, (p.allTimeScans / maxScans) * 80);
+                return (
+                  <tr key={p.id} className="hover:bg-[#F9F9F8] transition-colors">
+                    <td className="px-5 py-3">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="w-8 h-8 rounded-lg bg-[#F4F4F3] overflow-hidden shrink-0 flex items-center justify-center">
+                          {p.primaryImageUrl ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img src={p.primaryImageUrl} alt="" className="w-full h-full object-cover" />
+                          ) : (
+                            <FileText className="h-3.5 w-3.5 text-[#8C8C8C]" />
+                          )}
+                        </div>
+                        <div className="min-w-0">
+                          <Link href={`/passports/${p.id}`} className="text-sm font-medium text-black hover:underline truncate block max-w-[200px]">
+                            {p.name}
+                          </Link>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-5 py-3 text-right">
+                      <span className="text-sm tabular-nums text-[#525252]">{p.thirtyDayScans}</span>
+                    </td>
+                    <td className="px-5 py-3 text-right">
+                      <div className="flex items-center justify-end gap-2">
+                        <div className="h-1.5 rounded-full bg-[#0e6dea]" style={{ width: `${barWidth}px` }} />
+                        <span className="text-sm font-medium tabular-nums text-black w-8 text-right">{p.allTimeScans}</span>
+                      </div>
+                    </td>
+                    <td className="px-5 py-3 text-right hidden sm:table-cell">
+                      {p.slug && (
+                        <a
+                          href={`/p/${p.slug}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 text-xs text-[#0e6dea] hover:underline"
+                        >
+                          <ExternalLink className="h-3 w-3" />
+                          Open
+                        </a>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        )}
       </div>
     </div>
   );

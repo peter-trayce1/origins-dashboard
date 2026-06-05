@@ -26,7 +26,7 @@ async function getAnalyticsData() {
   const thirtyDaysAgo = new Date();
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-  const [scansRes, passportsRes, topPassportsRes] = await Promise.all([
+  const [scansRes, passportsRes, topPassportsRes, publishedRes] = await Promise.all([
     supabase
       .from("scans")
       .select("scanned_at, device_type, country_code")
@@ -44,6 +44,14 @@ async function getAnalyticsData() {
       .select("passport_id, passports(product_name)")
       .eq("brand_id", brand.id)
       .gte("scanned_at", thirtyDaysAgo.toISOString()),
+
+    // Published passports with all-time scan counts via qr_codes trigger
+    supabase
+      .from("passports")
+      .select("id, product_name, primary_image_url, slug, published_at, qr_codes(scan_count)")
+      .eq("brand_id", brand.id)
+      .eq("status", "published")
+      .order("updated_at", { ascending: false }),
   ]);
 
   const scans = scansRes.data ?? [];
@@ -65,7 +73,13 @@ async function getAnalyticsData() {
     scanData.push({ date: dateStr, scans: scansByDate[dateStr] ?? 0 });
   }
 
-  // Top passports by scan count
+  // 30-day scans grouped by passport
+  const thirtyDaysByPassport: Record<string, number> = {};
+  for (const scan of topPassportsRes.data ?? []) {
+    thirtyDaysByPassport[scan.passport_id] = (thirtyDaysByPassport[scan.passport_id] ?? 0) + 1;
+  }
+
+  // Top passports by 30d scan count (for the chart card)
   const passportScanCounts: Record<string, { name: string; count: number }> = {};
   for (const scan of topPassportsRes.data ?? []) {
     const pid = scan.passport_id;
@@ -79,6 +93,21 @@ async function getAnalyticsData() {
     .sort((a, b) => b[1].count - a[1].count)
     .slice(0, 5)
     .map(([, v]) => v);
+
+  // Per-published-passport breakdown (all-time + 30d)
+  const publishedPassportDetails = (publishedRes.data ?? []).map((p) => {
+    const qrCodes = (p.qr_codes as unknown as { scan_count: number }[] | null) ?? [];
+    const allTimeScans = qrCodes.reduce((sum, q) => sum + (q.scan_count ?? 0), 0);
+    return {
+      id: p.id,
+      name: p.product_name || "Untitled",
+      slug: p.slug as string | null,
+      primaryImageUrl: p.primary_image_url as string | null,
+      publishedAt: p.published_at as string | null,
+      allTimeScans,
+      thirtyDayScans: thirtyDaysByPassport[p.id] ?? 0,
+    };
+  }).sort((a, b) => b.allTimeScans - a.allTimeScans);
 
   // Device breakdown
   const deviceBreakdown: Record<string, number> = {};
@@ -97,6 +126,7 @@ async function getAnalyticsData() {
     avgCompleteness: passports.length
       ? Math.round(passports.reduce((sum, p) => sum + (p.completeness_score ?? 0), 0) / passports.length)
       : 0,
+    publishedPassportDetails,
   };
 }
 
