@@ -94,6 +94,7 @@ const BULK_FIELDS: BulkField[] = [
   { id: "coo",         label: "Country of origin",   category: "Product",        mode: "scalar",          inputType: "select",   apiField: "country_of_origin",     warningOnReplace: true, options: COUNTRIES.map(c => ({ value: c, label: c })) },
   { id: "weight",      label: "Product weight",      category: "Product",        mode: "scalar",          inputType: "number",   apiField: "product_weight_g",      unit: "g",    warningOnReplace: true },
   { id: "lifetime",    label: "Expected lifetime",   category: "Product",        mode: "scalar",          inputType: "number",   apiField: "product_lifetime_years",unit: "years",warningOnReplace: true },
+  { id: "product_url", label: "Product page URL",    category: "Product",        mode: "scalar",          inputType: "url",      apiField: "product_url",           warningOnReplace: true },
 
   // Materials
   { id: "add_material",   label: "Add material",            category: "Materials",      mode: "append",          inputType: "material", arrayField: "product_materials" },
