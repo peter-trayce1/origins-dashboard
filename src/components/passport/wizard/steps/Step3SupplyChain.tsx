@@ -134,7 +134,7 @@ function FacilityCertUpload({ onUploaded }: { onUploaded: (url: string) => void 
 
 const MEMORY_KEY = "origins_supplier_memory_v1";
 
-type SupplierMemoryEntry = Pick<WizardFacility, "facility_name" | "country" | "city" | "process_stage" | "website_url">;
+type SupplierMemoryEntry = Omit<WizardFacility, "id" | "facility_id">;
 
 function useSupplierMemory() {
   const [memory, setMemory] = useState<SupplierMemoryEntry[]>([]);
@@ -148,13 +148,22 @@ function useSupplierMemory() {
 
   function saveSupplier(f: WizardFacility) {
     if (!f.facility_name) return;
+    // Save every field except the DB-specific ids
+    const entry: SupplierMemoryEntry = {
+      facility_name:           f.facility_name,
+      tier:                    f.tier,
+      process_stage:           f.process_stage,
+      country:                 f.country,
+      city:                    f.city,
+      website_url:             f.website_url,
+      facility_address:        f.facility_address,
+      ownership_relationship:  f.ownership_relationship,
+      confidence_level:        f.confidence_level,
+      facility_certifications: f.facility_certifications,
+    };
     setMemory((prev) => {
       const deduped = prev.filter((m) => m.facility_name !== f.facility_name);
-      const updated = [
-        { facility_name: f.facility_name, country: f.country, city: f.city,
-          process_stage: f.process_stage, website_url: f.website_url },
-        ...deduped,
-      ].slice(0, 20);
+      const updated = [entry, ...deduped].slice(0, 20);
       try { localStorage.setItem(MEMORY_KEY, JSON.stringify(updated)); } catch { /* ignore */ }
       return updated;
     });
@@ -268,12 +277,9 @@ export function Step3SupplyChain() {
     setStep3({
       facilities: [...facilities, {
         ...defaultFacility(),
-        facility_name: entry.facility_name,
-        country: entry.country ?? "",
-        city: entry.city ?? "",
-        process_stage: entry.process_stage ?? "",
-        website_url: entry.website_url ?? "",
-        tier: SUPPLIER_TYPE_TO_TIER[entry.process_stage ?? ""] ?? 1,
+        ...entry,
+        // Recalculate tier from process_stage in case the mapping has changed
+        tier: SUPPLIER_TYPE_TO_TIER[entry.process_stage] ?? entry.tier ?? 1,
       }],
     });
   }
