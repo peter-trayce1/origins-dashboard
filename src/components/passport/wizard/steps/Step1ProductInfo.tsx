@@ -60,6 +60,70 @@ function Field({ label, required, hint, children }: {
   );
 }
 
+// ── Manufacturing date picker ─────────────────────────────────────────────────
+
+const MONTHS = [
+  { value: "01", label: "January" },
+  { value: "02", label: "February" },
+  { value: "03", label: "March" },
+  { value: "04", label: "April" },
+  { value: "05", label: "May" },
+  { value: "06", label: "June" },
+  { value: "07", label: "July" },
+  { value: "08", label: "August" },
+  { value: "09", label: "September" },
+  { value: "10", label: "October" },
+  { value: "11", label: "November" },
+  { value: "12", label: "December" },
+];
+
+const currentYear = new Date().getFullYear();
+const YEARS = Array.from({ length: 12 }, (_, i) => String(currentYear - 5 + i));
+
+function ManufacturingDatePicker({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  const [year, month] = value ? value.split("-") : ["", ""];
+
+  function handleChange(newYear: string, newMonth: string) {
+    if (newYear && newMonth) onChange(`${newYear}-${newMonth}`);
+    else if (newYear && month) onChange(`${newYear}-${month}`);
+    else if (year && newMonth) onChange(`${year}-${newMonth}`);
+    else onChange("");
+  }
+
+  return (
+    <div className="grid grid-cols-2 gap-2">
+      <Select value={month ?? ""} onValueChange={(m) => handleChange(year ?? "", m)}>
+        <SelectTrigger className="h-8 text-[13px]">
+          <SelectValue placeholder="Month" />
+        </SelectTrigger>
+        <SelectContent>
+          {MONTHS.map((m) => (
+            <SelectItem key={m.value} value={m.value} className="text-[13px]">{m.label}</SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+      <Select value={year ?? ""} onValueChange={(y) => handleChange(y, month ?? "")}>
+        <SelectTrigger className="h-8 text-[13px]">
+          <SelectValue placeholder="Year" />
+        </SelectTrigger>
+        <SelectContent>
+          {YEARS.map((y) => (
+            <SelectItem key={y} value={y} className="text-[13px]">{y}</SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </div>
+  );
+}
+
+// ── Main component ────────────────────────────────────────────────────────────
+
 export function Step1ProductInfo() {
   const { step1, setStep1 } = useWizardStore();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -250,8 +314,11 @@ export function Step1ProductInfo() {
           <Field label="Batch ID">
             <Input className="h-8 text-[13px]" placeholder="BATCH-2025-04" value={step1.batch_id} onChange={(e) => update("batch_id", e.target.value)} />
           </Field>
-          <Field label="Manufacturing date" hint="Month and year only">
-            <Input className="h-8 text-[13px]" type="month" value={step1.manufacturing_date} onChange={(e) => update("manufacturing_date", e.target.value)} />
+          <Field label="Manufacturing date" hint="Month and year">
+            <ManufacturingDatePicker
+              value={step1.manufacturing_date}
+              onChange={(v) => update("manufacturing_date", v)}
+            />
           </Field>
         </div>
       </FieldGroup>
