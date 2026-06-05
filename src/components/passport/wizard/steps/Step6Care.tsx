@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useWizardStore } from "@/stores/wizardStore";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -98,21 +98,25 @@ export function Step6Care() {
   const { step6, setStep6 } = useWizardStore();
   const { memory, saveInstruction, deleteFromMemory } = useCareMemory();
 
-  // Save custom care instructions to memory only when the passport is successfully
-  // saved to the database. Reading via getState() avoids stale closure issues.
-  // This never fires mid-typing — only after the auto-save debounce completes.
-  const lastSaved = useWizardStore((s) => s.lastSaved);
+  // 20-second debounce: reset the timer on every change to care_instructions.
+  // When the timer fires (20s after the last keystroke) read fresh state from the
+  // store so we always get the complete, final instruction text — never partial strings.
+  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
-    if (!lastSaved) return;
-    const instructions = useWizardStore.getState().step6.care_instructions;
-    instructions.forEach((c) => {
-      if (c.instruction.trim() && !PREDEFINED_INSTRUCTIONS.has(c.instruction)) {
-        saveInstruction({ type: c.type, instruction: c.instruction });
-      }
-    });
-    // saveInstruction uses functional setMemory so it's safe to omit from deps
+    if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    saveTimerRef.current = setTimeout(() => {
+      const instructions = useWizardStore.getState().step6.care_instructions;
+      instructions.forEach((c) => {
+        if (c.instruction.trim() && !PREDEFINED_INSTRUCTIONS.has(c.instruction)) {
+          saveInstruction({ type: c.type, instruction: c.instruction });
+        }
+      });
+    }, 20000);
+    return () => {
+      if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [lastSaved]);
+  }, [step6.care_instructions]);
 
   function addCare() {
     setStep6({
