@@ -44,6 +44,7 @@ const CARE_CHIPS: { category: string; items: { type: string; instruction: string
       { type: "iron",      instruction: "Iron on low heat" },
       { type: "iron",      instruction: "Iron on medium heat with steam" },
       { type: "iron",      instruction: "Do not iron" },
+      { type: "iron",      instruction: "Do not iron over print" },
       { type: "dry_clean", instruction: "Dry clean only" },
       { type: "dry_clean", instruction: "Do not dry clean" },
     ],
