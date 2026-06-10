@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { useWizardStore } from "@/stores/wizardStore";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ExternalLink, Loader2, MapPin, Plus, Trash2, Upload, X } from "lucide-react";
 import type { WizardFacility } from "@/types/wizard";
-import { useOrganisation } from "@/hooks/useOrganisation";
+import { useBrandMemory } from "@/hooks/useBrandMemory";
 
 // ── Supplier types (brand-friendly, replaces "process stage") ─────────────────
 
@@ -131,36 +131,17 @@ function FacilityCertUpload({ onUploaded }: { onUploaded: (url: string) => void 
   );
 }
 
-// ── Supplier memory (localStorage, scoped per organisation) ──────────────────
-// The key is namespaced by organisation ID so memory never leaks between
-// accounts sharing the same browser.
-
-const MEMORY_KEY_BASE = "origins_supplier_memory_v2";
+// ── Supplier memory (server-side, scoped per brand via brand_memory table) ───
+// Stored in the database keyed by brand_id, so it is strictly isolated per
+// account and follows the brand across devices.
 
 type SupplierMemoryEntry = Omit<WizardFacility, "id" | "facility_id">;
 
 function useSupplierMemory() {
-  const { org } = useOrganisation();
-  const orgId = org?.organisationId;
-  const storageKey = orgId ? `${MEMORY_KEY_BASE}_${orgId}` : null;
-  const [memory, setMemory] = useState<SupplierMemoryEntry[]>([]);
-
-  // Remove the old non-namespaced key that leaked data between accounts
-  useEffect(() => {
-    try { localStorage.removeItem("origins_supplier_memory_v1"); } catch { /* ignore */ }
-  }, []);
-
-  // Load only once the org is known, so we read this account's data — never another's
-  useEffect(() => {
-    if (!storageKey) { setMemory([]); return; }
-    try {
-      const raw = localStorage.getItem(storageKey);
-      setMemory(raw ? JSON.parse(raw) : []);
-    } catch { setMemory([]); }
-  }, [storageKey]);
+  const { items: memory, persist } = useBrandMemory<SupplierMemoryEntry>("suppliers");
 
   function saveSupplier(f: WizardFacility) {
-    if (!f.facility_name || !storageKey) return;
+    if (!f.facility_name) return;
     const entry: SupplierMemoryEntry = {
       facility_name:           f.facility_name,
       tier:                    f.tier,
@@ -173,22 +154,15 @@ function useSupplierMemory() {
       confidence_level:        f.confidence_level,
       facility_certifications: f.facility_certifications,
     };
-    setMemory((prev) => {
-      // Always replace the old entry for this supplier name with the latest data
+    // Always replace the old entry for this supplier name with the latest data
+    persist((prev) => {
       const deduped = prev.filter((m) => m.facility_name !== f.facility_name);
-      const updated = [entry, ...deduped].slice(0, 20);
-      try { localStorage.setItem(storageKey, JSON.stringify(updated)); } catch { /* ignore */ }
-      return updated;
+      return [entry, ...deduped].slice(0, 20);
     });
   }
 
   function deleteFromMemory(facilityName: string) {
-    if (!storageKey) return;
-    setMemory((prev) => {
-      const updated = prev.filter((m) => m.facility_name !== facilityName);
-      try { localStorage.setItem(storageKey, JSON.stringify(updated)); } catch { /* ignore */ }
-      return updated;
-    });
+    persist((prev) => prev.filter((m) => m.facility_name !== facilityName));
   }
 
   return { memory, saveSupplier, deleteFromMemory };

@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useWizardStore } from "@/stores/wizardStore";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -91,13 +91,29 @@ function ManufacturingDatePicker({
   onChange: (v: string) => void;
   onMadeToOrderChange: (v: boolean) => void;
 }) {
-  const [year, month] = value ? value.split("-") : ["", ""];
+  // Local state is the source of truth for the two dropdowns, so a month or
+  // year can be picked in any order without clearing the other.
+  const initial = value ? value.split("-") : ["", ""];
+  const [selYear, setSelYear] = useState(initial[0] ?? "");
+  const [selMonth, setSelMonth] = useState(initial[1] ?? "");
 
-  function handleChange(newYear: string, newMonth: string) {
-    if (newYear && newMonth) onChange(`${newYear}-${newMonth}`);
-    else if (newYear && month) onChange(`${newYear}-${month}`);
-    else if (year && newMonth) onChange(`${year}-${newMonth}`);
-    else onChange("");
+  // Re-sync from value only when it arrives non-empty (e.g. hydration of an
+  // existing passport). Partial in-progress entry keeps value "" so this no-ops.
+  useEffect(() => {
+    if (!value) return;
+    const [y, m] = value.split("-");
+    setSelYear(y ?? "");
+    setSelMonth(m ?? "");
+  }, [value]);
+
+  function pickMonth(m: string) {
+    setSelMonth(m);
+    onChange(selYear && m ? `${selYear}-${m}` : "");
+  }
+
+  function pickYear(y: string) {
+    setSelYear(y);
+    onChange(y && selMonth ? `${y}-${selMonth}` : "");
   }
 
   return (
@@ -105,7 +121,7 @@ function ManufacturingDatePicker({
       {!madeToOrder && (
         <div className="flex gap-2">
           <div className="flex-1 min-w-0">
-            <Select value={month ?? ""} onValueChange={(m) => handleChange(year ?? "", m)}>
+            <Select value={selMonth} onValueChange={pickMonth}>
               <SelectTrigger className="h-8 text-[13px] w-full">
                 <SelectValue placeholder="Month" />
               </SelectTrigger>
@@ -116,8 +132,8 @@ function ManufacturingDatePicker({
               </SelectContent>
             </Select>
           </div>
-          <div className="w-[88px] shrink-0">
-            <Select value={year ?? ""} onValueChange={(y) => handleChange(y, month ?? "")}>
+          <div className="w-[110px] shrink-0">
+            <Select value={selYear} onValueChange={pickYear}>
               <SelectTrigger className="h-8 text-[13px] w-full">
                 <SelectValue placeholder="Year" />
               </SelectTrigger>
@@ -133,7 +149,7 @@ function ManufacturingDatePicker({
       <label className="flex items-center gap-2 cursor-pointer group">
         <input
           type="checkbox"
-          checked={madeToOrder}
+          checked={!!madeToOrder}
           onChange={(e) => onMadeToOrderChange(e.target.checked)}
           className="w-3.5 h-3.5 rounded accent-black cursor-pointer"
         />
@@ -337,15 +353,15 @@ export function Step1ProductInfo() {
           <Field label="Batch ID">
             <Input className="h-8 text-[13px]" placeholder="BATCH-2025-04" value={step1.batch_id} onChange={(e) => update("batch_id", e.target.value)} />
           </Field>
-          <Field label="Manufacturing date" hint="Month and year">
-            <ManufacturingDatePicker
-              value={step1.manufacturing_date}
-              madeToOrder={step1.made_to_order}
-              onChange={(v) => update("manufacturing_date", v)}
-              onMadeToOrderChange={(v) => setStep1({ made_to_order: v, manufacturing_date: v ? "" : step1.manufacturing_date })}
-            />
-          </Field>
         </div>
+        <Field label="Manufacturing date" hint="Month and year, or mark as made to order">
+          <ManufacturingDatePicker
+            value={step1.manufacturing_date}
+            madeToOrder={!!step1.made_to_order}
+            onChange={(v) => update("manufacturing_date", v)}
+            onMadeToOrderChange={(v) => setStep1({ made_to_order: v, manufacturing_date: v ? "" : step1.manufacturing_date })}
+          />
+        </Field>
       </FieldGroup>
 
       {/* Collection & variant */}
