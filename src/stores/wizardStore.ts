@@ -34,6 +34,7 @@ const defaultStep1: WizardStep1 = {
   product_weight_g: "",
   product_lifetime_years: "",
   similar_products: [],
+  made_to_order: false,
 };
 
 const defaultStep2: WizardStep2 = {
@@ -202,6 +203,7 @@ export const useWizardStore = create<WizardStore>((set) => ({
         product_weight_g: (p.product_weight_g as number) ?? "",
         product_lifetime_years: (p.product_lifetime_years as number) ?? "",
         similar_products: (p.similar_products as import("@/types/wizard").SimilarProduct[]) ?? [],
+        made_to_order: (p.made_to_order as boolean) ?? false,
       },
       step2: {
         materials: (p.product_materials as WizardStep2["materials"]) ?? [],

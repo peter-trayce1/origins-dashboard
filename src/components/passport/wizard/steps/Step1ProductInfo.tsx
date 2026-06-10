@@ -82,10 +82,14 @@ const YEARS = Array.from({ length: 12 }, (_, i) => String(currentYear - 5 + i));
 
 function ManufacturingDatePicker({
   value,
+  madeToOrder,
   onChange,
+  onMadeToOrderChange,
 }: {
   value: string;
+  madeToOrder: boolean;
   onChange: (v: string) => void;
+  onMadeToOrderChange: (v: boolean) => void;
 }) {
   const [year, month] = value ? value.split("-") : ["", ""];
 
@@ -97,27 +101,46 @@ function ManufacturingDatePicker({
   }
 
   return (
-    <div className="grid grid-cols-2 gap-2">
-      <Select value={month ?? ""} onValueChange={(m) => handleChange(year ?? "", m)}>
-        <SelectTrigger className="h-8 text-[13px]">
-          <SelectValue placeholder="Month" />
-        </SelectTrigger>
-        <SelectContent>
-          {MONTHS.map((m) => (
-            <SelectItem key={m.value} value={m.value} className="text-[13px]">{m.label}</SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-      <Select value={year ?? ""} onValueChange={(y) => handleChange(y, month ?? "")}>
-        <SelectTrigger className="h-8 text-[13px]">
-          <SelectValue placeholder="Year" />
-        </SelectTrigger>
-        <SelectContent>
-          {YEARS.map((y) => (
-            <SelectItem key={y} value={y} className="text-[13px]">{y}</SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+    <div className="space-y-2">
+      {!madeToOrder && (
+        <div className="flex gap-2">
+          <div className="flex-1 min-w-0">
+            <Select value={month ?? ""} onValueChange={(m) => handleChange(year ?? "", m)}>
+              <SelectTrigger className="h-8 text-[13px] w-full">
+                <SelectValue placeholder="Month" />
+              </SelectTrigger>
+              <SelectContent>
+                {MONTHS.map((m) => (
+                  <SelectItem key={m.value} value={m.value} className="text-[13px]">{m.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="w-[88px] shrink-0">
+            <Select value={year ?? ""} onValueChange={(y) => handleChange(y, month ?? "")}>
+              <SelectTrigger className="h-8 text-[13px] w-full">
+                <SelectValue placeholder="Year" />
+              </SelectTrigger>
+              <SelectContent>
+                {YEARS.map((y) => (
+                  <SelectItem key={y} value={y} className="text-[13px]">{y}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+      )}
+      <label className="flex items-center gap-2 cursor-pointer group">
+        <input
+          type="checkbox"
+          checked={madeToOrder}
+          onChange={(e) => onMadeToOrderChange(e.target.checked)}
+          className="w-3.5 h-3.5 rounded accent-black cursor-pointer"
+        />
+        <span className="text-[12px] text-[#525252] group-hover:text-black transition-colors">
+          Made to order
+        </span>
+      </label>
     </div>
   );
 }
@@ -317,7 +340,9 @@ export function Step1ProductInfo() {
           <Field label="Manufacturing date" hint="Month and year">
             <ManufacturingDatePicker
               value={step1.manufacturing_date}
+              madeToOrder={step1.made_to_order}
               onChange={(v) => update("manufacturing_date", v)}
+              onMadeToOrderChange={(v) => setStep1({ made_to_order: v, manufacturing_date: v ? "" : step1.manufacturing_date })}
             />
           </Field>
         </div>

@@ -139,6 +139,7 @@ interface PassportData {
   }[];
   impact_metrics: ImpactMetric[];
   similar_products: { name: string; image_url: string; url: string; rrp: string }[] | null;
+  made_to_order: boolean | null;
   warranty_info: string | null;
   repairability_score: number | null;
   spare_parts_available: boolean;
@@ -1137,7 +1138,9 @@ export function PublicPassportPage({ passport, previewMode = false }: { passport
               <DataRow label="Country of origin" value={originCountry} />
               <DataRow label="Collection"        value={passport.collection_name ?? ""} />
               <DataRow label="Season"            value={passport.season ?? ""} />
-              {passport.manufacturing_date && (
+              {passport.made_to_order ? (
+                <DataRow label="Manufactured" value="Made to order" />
+              ) : passport.manufacturing_date ? (
                 <DataRow
                   label="Manufactured"
                   value={(() => {
@@ -1146,7 +1149,7 @@ export function PublicPassportPage({ passport, previewMode = false }: { passport
                     return parts.length >= 2 ? `${months[parseInt(parts[1], 10) - 1]} ${parts[0]}` : passport.manufacturing_date!;
                   })()}
                 />
-              )}
+              ) : null}
               {passport.product_weight_g != null && (
                 <DataRow label="Weight" value={`${passport.product_weight_g} g`} />
               )}

@@ -126,6 +126,7 @@ export interface WizardStep1 {
   product_weight_g: number | "";
   product_lifetime_years: number | "";
   similar_products: SimilarProduct[];
+  made_to_order: boolean;
 }
 
 export interface WizardStep2 {

@@ -578,9 +578,11 @@ export function LivePassportPreview({
                   {s1.product_lifetime_years !== "" && <SmallDataRow label="Est. lifetime" value={`${s1.product_lifetime_years} yr`} />}
                   <SmallDataRow label="GTIN"     value={s1.gtin ?? ""} />
                   <SmallDataRow label="Batch ID" value={s1.batch_id ?? ""} />
-                  {s1.manufacturing_date && (
+                  {s1.made_to_order ? (
+                    <SmallDataRow label="Made" value="Made to order" />
+                  ) : s1.manufacturing_date ? (
                     <SmallDataRow label="Made" value={formatMonthYear(s1.manufacturing_date)} />
-                  )}
+                  ) : null}
                 </div>
 
                 {/* Trims & finishing */}

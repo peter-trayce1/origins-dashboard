@@ -161,6 +161,7 @@ export type Database = {
           designer_quote: string | null;
           gallery_image_urls: string[];
           similar_products: { name: string; image_url: string; url: string; rrp: string }[] | null;
+          made_to_order: boolean;
           passport_code: string | null;
           warranty_info: string | null;
           repairability_score: number | null;
