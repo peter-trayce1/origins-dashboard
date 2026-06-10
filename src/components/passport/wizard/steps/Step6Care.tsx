@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ChevronDown, ChevronUp, Plus, Trash2, X } from "lucide-react";
 import type { WizardCareInstruction } from "@/types/wizard";
 import { CareSymbolIcon } from "@/components/shared/care-icons";
+import { useOrganisation } from "@/hooks/useOrganisation";
 
 const CARE_TYPES = [
   { value: "wash",      label: "Washing" },
@@ -51,10 +52,11 @@ const CARE_CHIPS: { category: string; items: { type: string; instruction: string
   },
 ];
 
-// ── Care instruction memory (localStorage, custom instructions only) ──────────
-// v2 key intentionally clears any old partial-save data from earlier versions.
+// ── Care instruction memory (localStorage, scoped per organisation) ──────────
+// The key is namespaced by organisation ID so memory never leaks between
+// accounts sharing the same browser. v3 key clears older global data.
 
-const CARE_MEMORY_KEY = "origins_care_memory_v2";
+const CARE_MEMORY_KEY_BASE = "origins_care_memory_v3";
 
 const PREDEFINED_INSTRUCTIONS = new Set(
   CARE_CHIPS.flatMap((g) => g.items.map((i) => i.instruction))
@@ -63,29 +65,43 @@ const PREDEFINED_INSTRUCTIONS = new Set(
 type CareMemoryEntry = { type: string; instruction: string };
 
 function useCareMemory() {
+  const { org } = useOrganisation();
+  const orgId = org?.organisationId;
+  const storageKey = orgId ? `${CARE_MEMORY_KEY_BASE}_${orgId}` : null;
   const [memory, setMemory] = useState<CareMemoryEntry[]>([]);
 
+  // Remove the old non-namespaced keys that leaked data between accounts
   useEffect(() => {
     try {
-      const raw = localStorage.getItem(CARE_MEMORY_KEY);
-      if (raw) setMemory(JSON.parse(raw));
+      localStorage.removeItem("origins_care_memory_v1");
+      localStorage.removeItem("origins_care_memory_v2");
     } catch { /* ignore */ }
   }, []);
 
+  // Load only once the org is known, so we read this account's data — never another's
+  useEffect(() => {
+    if (!storageKey) { setMemory([]); return; }
+    try {
+      const raw = localStorage.getItem(storageKey);
+      setMemory(raw ? JSON.parse(raw) : []);
+    } catch { setMemory([]); }
+  }, [storageKey]);
+
   function saveInstruction(entry: CareMemoryEntry) {
-    if (!entry.instruction.trim() || PREDEFINED_INSTRUCTIONS.has(entry.instruction)) return;
+    if (!entry.instruction.trim() || PREDEFINED_INSTRUCTIONS.has(entry.instruction) || !storageKey) return;
     setMemory((prev) => {
       const deduped = prev.filter((m) => m.instruction !== entry.instruction);
       const updated = [entry, ...deduped].slice(0, 30);
-      try { localStorage.setItem(CARE_MEMORY_KEY, JSON.stringify(updated)); } catch { /* ignore */ }
+      try { localStorage.setItem(storageKey, JSON.stringify(updated)); } catch { /* ignore */ }
       return updated;
     });
   }
 
   function deleteFromMemory(instruction: string) {
+    if (!storageKey) return;
     setMemory((prev) => {
       const updated = prev.filter((m) => m.instruction !== instruction);
-      try { localStorage.setItem(CARE_MEMORY_KEY, JSON.stringify(updated)); } catch { /* ignore */ }
+      try { localStorage.setItem(storageKey, JSON.stringify(updated)); } catch { /* ignore */ }
       return updated;
     });
   }

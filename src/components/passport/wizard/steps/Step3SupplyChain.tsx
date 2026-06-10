@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ExternalLink, Loader2, MapPin, Plus, Trash2, Upload, X } from "lucide-react";
 import type { WizardFacility } from "@/types/wizard";
+import { useOrganisation } from "@/hooks/useOrganisation";
 
 // ── Supplier types (brand-friendly, replaces "process stage") ─────────────────
 
@@ -130,24 +131,36 @@ function FacilityCertUpload({ onUploaded }: { onUploaded: (url: string) => void 
   );
 }
 
-// ── Supplier memory (localStorage) ───────────────────────────────────────────
+// ── Supplier memory (localStorage, scoped per organisation) ──────────────────
+// The key is namespaced by organisation ID so memory never leaks between
+// accounts sharing the same browser.
 
-const MEMORY_KEY = "origins_supplier_memory_v1";
+const MEMORY_KEY_BASE = "origins_supplier_memory_v2";
 
 type SupplierMemoryEntry = Omit<WizardFacility, "id" | "facility_id">;
 
 function useSupplierMemory() {
+  const { org } = useOrganisation();
+  const orgId = org?.organisationId;
+  const storageKey = orgId ? `${MEMORY_KEY_BASE}_${orgId}` : null;
   const [memory, setMemory] = useState<SupplierMemoryEntry[]>([]);
 
+  // Remove the old non-namespaced key that leaked data between accounts
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem(MEMORY_KEY);
-      if (raw) setMemory(JSON.parse(raw));
-    } catch { /* ignore */ }
+    try { localStorage.removeItem("origins_supplier_memory_v1"); } catch { /* ignore */ }
   }, []);
 
+  // Load only once the org is known, so we read this account's data — never another's
+  useEffect(() => {
+    if (!storageKey) { setMemory([]); return; }
+    try {
+      const raw = localStorage.getItem(storageKey);
+      setMemory(raw ? JSON.parse(raw) : []);
+    } catch { setMemory([]); }
+  }, [storageKey]);
+
   function saveSupplier(f: WizardFacility) {
-    if (!f.facility_name) return;
+    if (!f.facility_name || !storageKey) return;
     const entry: SupplierMemoryEntry = {
       facility_name:           f.facility_name,
       tier:                    f.tier,
@@ -164,15 +177,16 @@ function useSupplierMemory() {
       // Always replace the old entry for this supplier name with the latest data
       const deduped = prev.filter((m) => m.facility_name !== f.facility_name);
       const updated = [entry, ...deduped].slice(0, 20);
-      try { localStorage.setItem(MEMORY_KEY, JSON.stringify(updated)); } catch { /* ignore */ }
+      try { localStorage.setItem(storageKey, JSON.stringify(updated)); } catch { /* ignore */ }
       return updated;
     });
   }
 
   function deleteFromMemory(facilityName: string) {
+    if (!storageKey) return;
     setMemory((prev) => {
       const updated = prev.filter((m) => m.facility_name !== facilityName);
-      try { localStorage.setItem(MEMORY_KEY, JSON.stringify(updated)); } catch { /* ignore */ }
+      try { localStorage.setItem(storageKey, JSON.stringify(updated)); } catch { /* ignore */ }
       return updated;
     });
   }
