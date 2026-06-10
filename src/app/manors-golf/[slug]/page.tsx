@@ -50,13 +50,13 @@ export async function generateMetadata({
   const brand = passport.brands as { name: string; logo_url: string | null };
 
   return {
-    title: `${passport.product_name} — ${brand?.name}`,
+    title: `${passport.product_name} — ${passport.brand_name_override || brand?.name}`,
     description:
       passport.consumer_transparency_summary ??
       passport.product_description ??
       `Digital Product Passport for ${passport.product_name}`,
     openGraph: {
-      title: `${passport.product_name} — ${brand?.name}`,
+      title: `${passport.product_name} — ${passport.brand_name_override || brand?.name}`,
       description: passport.product_description ?? undefined,
       images: passport.primary_image_url ? [passport.primary_image_url] : [],
       type: "website",

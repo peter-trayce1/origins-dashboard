@@ -81,6 +81,8 @@ interface PassportData {
   designer_quote: string | null;
   consumer_transparency_summary: string | null;
   video_url: string | null;
+  brand_name_override: string | null;
+  brand_logo_override: string | null;
   updated_at: string;
   brands: {
     name: string;
@@ -979,6 +981,9 @@ export function PublicPassportPage({ passport, previewMode = false }: { passport
   const [activeTab, setActiveTab] = useState<Tab>("Product");
 
   const brand = passport.brands;
+  // Per-passport brand identity override (set only by demo accounts) takes precedence
+  const displayBrandName = passport.brand_name_override || brand.name;
+  const displayBrandLogo = passport.brand_logo_override || brand.logo_url;
   const claims = Array.isArray(passport.sustainability_claims)
     ? (passport.sustainability_claims as string[])
     : [];
@@ -1038,17 +1043,16 @@ export function PublicPassportPage({ passport, previewMode = false }: { passport
       {/* ── Sticky header ──────────────────────────────────────── */}
       <header className={`sticky z-30 bg-white/95 backdrop-blur-sm border-b border-[#e8e8e8] ${previewMode ? "top-8" : "top-0"}`}>
         <div className="max-w-[430px] mx-auto px-5 h-14 flex items-center justify-between gap-3">
-          {brand.logo_url ? (
-            <Image
-              src={brand.logo_url}
-              alt={brand.name}
-              width={120}
-              height={32}
+          {displayBrandLogo ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={displayBrandLogo}
+              alt={displayBrandName}
               className="h-8 w-auto object-contain object-left"
             />
           ) : (
             <span className="text-[15px] font-bold tracking-tight text-[#111] uppercase">
-              {brand.name}
+              {displayBrandName}
             </span>
           )}
           <div className="flex items-center gap-1.5 text-[11px] text-[#8b8b8b] shrink-0">
@@ -1595,17 +1599,16 @@ export function PublicPassportPage({ passport, previewMode = false }: { passport
         {/* ── Footer ─────────────────────────────────────────────── */}
         <footer className="bg-[#111] px-5 pt-10 pb-12 mt-0.5">
           <div className="mb-6">
-            {brand.logo_url ? (
-              <Image
-                src={brand.logo_url}
-                alt={brand.name}
-                width={140}
-                height={36}
+            {displayBrandLogo ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={displayBrandLogo}
+                alt={displayBrandName}
                 className="h-8 w-auto object-contain brightness-0 invert"
               />
             ) : (
               <p className="text-xl font-bold text-white uppercase tracking-tight">
-                {brand.name}
+                {displayBrandName}
               </p>
             )}
           </div>

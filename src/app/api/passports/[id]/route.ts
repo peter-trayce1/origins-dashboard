@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { calculateCompleteness } from "@/lib/completeness";
 import { makeUniqueSlug } from "@/lib/slugify";
+import { isDemoEmail } from "@/lib/demo-account";
 import type { Json } from "@/lib/supabase/types";
 
 export async function GET(
@@ -72,6 +73,13 @@ export async function PATCH(
       care_instructions, circularity_actions, impact_metrics,
       passport_material_extras, claim_evidence_urls,
       ...passportData } = body;
+
+    // Brand identity override is a demo-account-only capability. Strip it for
+    // every other account so it can never be set via the API.
+    if (!isDemoEmail(user.email)) {
+      delete passportData.brand_name_override;
+      delete passportData.brand_logo_override;
+    }
 
     const { data: passport, error } = await supabase
       .from("passports")

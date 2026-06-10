@@ -9,6 +9,7 @@ export interface OrgContext {
   brandName: string;
   brandLogoUrl: string | null;
   role: string;
+  userEmail: string | null;
 }
 
 async function fetchOrgContext(): Promise<OrgContext | null> {
@@ -41,6 +42,7 @@ async function fetchOrgContext(): Promise<OrgContext | null> {
     brandName: brand.name,
     brandLogoUrl: brand.logo_url,
     role: member.role,
+    userEmail: user.email ?? null,
   };
 }
 

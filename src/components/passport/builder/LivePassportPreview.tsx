@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Image from "next/image";
 import { useWizardStore } from "@/stores/wizardStore";
 import { useOrganisation } from "@/hooks/useOrganisation";
 import type { BuilderSection } from "./BuilderNavSidebar";
@@ -424,6 +423,10 @@ export function LivePassportPreview({
     onSectionChange?.(TAB_TO_SECTION[tab]);
   }
 
+  // Brand identity: per-passport override (demo accounts) falls back to the account brand
+  const displayBrandName = s1.brand_name_override || brandName;
+  const displayBrandLogo = s1.brand_logo_override || org?.brandLogoUrl || "";
+
   const sortedFacilities = [...s3.facilities].sort((a, b) => {
     const stageA = normalizeProcessStage(a.process_stage);
     const stageB = normalizeProcessStage(b.process_stage);
@@ -482,10 +485,11 @@ export function LivePassportPreview({
 
           {/* Brand header */}
           <div className="shrink-0 flex items-center justify-between px-3.5 bg-white border-b border-[#f0f0ee] z-10" style={{ paddingTop: 38, paddingBottom: 8 }}>
-            {org?.brandLogoUrl ? (
-              <Image src={org.brandLogoUrl} alt={brandName} width={80} height={24} className="object-contain max-h-5 max-w-[72px]" />
+            {displayBrandLogo ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={displayBrandLogo} alt={displayBrandName} className="object-contain max-h-5 max-w-[72px]" />
             ) : (
-              <span className="text-[12px] font-bold text-black tracking-tight uppercase">{brandName}</span>
+              <span className="text-[12px] font-bold text-black tracking-tight uppercase">{displayBrandName}</span>
             )}
             <span className="text-[7px] text-[#BDBDBB] tracking-wide font-mono">ID by Origins</span>
           </div>
@@ -956,10 +960,11 @@ export function LivePassportPreview({
 
             {/* Mini footer */}
             <div className="bg-[#111] px-3.5 pt-6 pb-4 mt-0.5">
-              {org?.brandLogoUrl ? (
-                <Image src={org.brandLogoUrl} alt={brandName} width={70} height={20} className="h-5 w-auto object-contain brightness-0 invert mb-2.5" />
+              {displayBrandLogo ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={displayBrandLogo} alt={displayBrandName} className="h-5 w-auto object-contain brightness-0 invert mb-2.5" />
               ) : (
-                <p className="text-[11px] font-bold text-white uppercase tracking-tight mb-2.5">{brandName}</p>
+                <p className="text-[11px] font-bold text-white uppercase tracking-tight mb-2.5">{displayBrandName}</p>
               )}
               <p className="text-[7px] text-[#888] font-mono">◉ Digital Product Passport by Origins</p>
             </div>

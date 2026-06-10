@@ -127,6 +127,9 @@ export interface WizardStep1 {
   product_lifetime_years: number | "";
   similar_products: SimilarProduct[];
   made_to_order: boolean;
+  // Demo-account-only per-passport brand identity override
+  brand_name_override: string;
+  brand_logo_override: string;
 }
 
 export interface WizardStep2 {

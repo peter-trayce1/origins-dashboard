@@ -35,6 +35,8 @@ const defaultStep1: WizardStep1 = {
   product_lifetime_years: "",
   similar_products: [],
   made_to_order: false,
+  brand_name_override: "",
+  brand_logo_override: "",
 };
 
 const defaultStep2: WizardStep2 = {
@@ -204,6 +206,8 @@ export const useWizardStore = create<WizardStore>((set) => ({
         product_lifetime_years: (p.product_lifetime_years as number) ?? "",
         similar_products: (p.similar_products as import("@/types/wizard").SimilarProduct[]) ?? [],
         made_to_order: (p.made_to_order as boolean) ?? false,
+        brand_name_override: (p.brand_name_override as string) ?? "",
+        brand_logo_override: (p.brand_logo_override as string) ?? "",
       },
       step2: {
         materials: (p.product_materials as WizardStep2["materials"]) ?? [],

@@ -6,8 +6,10 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Upload, X, Loader2, ChevronDown, Lock, Plus, Trash2 } from "lucide-react";
+import { Upload, X, Loader2, ChevronDown, Lock, Plus, Trash2, Sparkles } from "lucide-react";
 import type { SimilarProduct } from "@/types/wizard";
+import { useOrganisation } from "@/hooks/useOrganisation";
+import { isDemoEmail } from "@/lib/demo-account";
 
 const CATEGORIES = [
   "T-shirts & Tops", "Shirts & Blouses", "Knitwear", "Outerwear", "Coats & Jackets", "Dresses",
@@ -165,6 +167,8 @@ function ManufacturingDatePicker({
 
 export function Step1ProductInfo() {
   const { step1, setStep1 } = useWizardStore();
+  const { org } = useOrganisation();
+  const isDemo = isDemoEmail(org?.userEmail);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
@@ -213,6 +217,17 @@ export function Step1ProductInfo() {
           </div>
           <Lock className="h-3.5 w-3.5 text-[#BDBDBB] shrink-0 ml-3" />
         </div>
+      )}
+
+      {/* Brand identity — demo account only. Lets the demo build passports for any brand. */}
+      {isDemo && (
+        <DemoBrandIdentity
+          name={step1.brand_name_override}
+          logoUrl={step1.brand_logo_override}
+          accountBrandName={org?.brandName ?? ""}
+          onName={(v) => update("brand_name_override", v)}
+          onLogo={(v) => update("brand_logo_override", v)}
+        />
       )}
 
       {/* Product name — always visible at top */}
@@ -560,6 +575,102 @@ function SimilarProductCard({
           RRP <span className="font-normal text-[#BDBDBB]">Optional</span>
         </Label>
         <Input className="h-8 text-[13px]" placeholder="e.g. £89 or $120" value={item.rrp} onChange={(e) => onUpdate("rrp", e.target.value)} />
+      </div>
+    </div>
+  );
+}
+
+// ── Demo-only brand identity override ─────────────────────────────────────────
+
+function DemoBrandIdentity({
+  name,
+  logoUrl,
+  accountBrandName,
+  onName,
+  onLogo,
+}: {
+  name: string;
+  logoUrl: string;
+  accountBrandName: string;
+  onName: (v: string) => void;
+  onLogo: (v: string) => void;
+}) {
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
+
+  async function handleLogo(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    try {
+      const form = new FormData();
+      form.append("file", file);
+      const res = await fetch("/api/upload/image", { method: "POST", body: form });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Upload failed");
+      onLogo(data.url);
+    } catch (err) {
+      console.error("Logo upload failed:", err);
+    } finally {
+      setUploading(false);
+      if (fileRef.current) fileRef.current.value = "";
+    }
+  }
+
+  return (
+    <div className="border border-[#0e6dea]/30 bg-[#0e6dea]/[0.04] rounded-xl p-3 space-y-2.5">
+      <div className="flex items-center gap-1.5">
+        <Sparkles className="h-3.5 w-3.5 text-[#0e6dea]" />
+        <span className="text-[11px] font-semibold text-[#0e6dea] uppercase tracking-wide">Demo · Brand identity</span>
+      </div>
+      <p className="text-[11px] text-[#525252] -mt-0.5">
+        Override the brand name and logo shown at the top of this passport. Leave blank to use {accountBrandName || "the account brand"}.
+      </p>
+
+      <div className="space-y-1">
+        <Label className="text-[10px] font-medium text-[#8C8C8C]">Brand name</Label>
+        <Input
+          className="h-8 text-[13px]"
+          placeholder={accountBrandName || "e.g. Acme Studio"}
+          value={name}
+          onChange={(e) => onName(e.target.value)}
+        />
+      </div>
+
+      <div className="space-y-1">
+        <Label className="text-[10px] font-medium text-[#8C8C8C]">Brand logo</Label>
+        <div className="flex items-center gap-3">
+          <div className="w-14 h-14 rounded-lg border border-[#E8E8E6] bg-white overflow-hidden shrink-0 flex items-center justify-center">
+            {logoUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={logoUrl} alt="Brand logo" className="w-full h-full object-contain p-1" />
+            ) : (
+              <Upload className="h-4 w-4 text-[#BDBDBB]" />
+            )}
+          </div>
+          <div className="flex gap-1.5">
+            <button
+              type="button"
+              disabled={uploading}
+              onClick={() => fileRef.current?.click()}
+              className="h-8 px-3 flex items-center gap-1.5 border border-[#E8E8E6] rounded-lg text-[11px] text-[#525252] hover:bg-white transition-colors disabled:opacity-50"
+            >
+              {uploading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Upload className="h-3 w-3" />}
+              {uploading ? "Uploading…" : logoUrl ? "Replace" : "Upload logo"}
+            </button>
+            {logoUrl && (
+              <button
+                type="button"
+                onClick={() => onLogo("")}
+                className="h-8 px-2 text-[#8C8C8C] hover:text-red-600 transition-colors"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            )}
+          </div>
+        </div>
+        <p className="text-[10px] text-[#BDBDBB]">JPEG, PNG or SVG. Shown on the passport header and footer.</p>
+        <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleLogo} />
       </div>
     </div>
   );
