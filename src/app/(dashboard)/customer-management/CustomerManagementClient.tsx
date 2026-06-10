@@ -5,6 +5,7 @@ import {
   Building2, Users, FileText, QrCode, TrendingUp, Clock,
   CheckCircle2, XCircle, PauseCircle, RefreshCw, Loader2,
   ChevronRight, ExternalLink, Search, Shield, Trash2, AlertTriangle,
+  Mail, Phone,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -37,6 +38,13 @@ interface AppRow {
 interface UserRow {
   id: string; email: string; full_name: string; role: string;
   org_name: string; org_role: string; created_at: string; last_sign_in: string | null;
+}
+
+interface DemoRow {
+  id: string; full_name: string | null; email: string; company: string | null;
+  job_title: string | null; phone: string | null; website: string | null;
+  message: string | null; source: string | null;
+  status: "new" | "contacted" | "scheduled" | "closed"; created_at: string;
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -726,6 +734,176 @@ function UsageTab({ stats }: { stats: Stats | null }) {
   );
 }
 
+// ── Demo Requests Tab ─────────────────────────────────────────────────────────
+
+function demoStatusBadge(status: string) {
+  const base = "inline-flex items-center text-[11px] font-semibold px-2 py-0.5 rounded-full border capitalize";
+  if (status === "new")       return `${base} bg-blue-50 text-blue-700 border-blue-200`;
+  if (status === "contacted") return `${base} bg-amber-50 text-amber-700 border-amber-200`;
+  if (status === "scheduled") return `${base} bg-violet-50 text-violet-700 border-violet-200`;
+  if (status === "closed")    return `${base} bg-[#F4F4F3] text-[#525252] border-[#E8E8E6]`;
+  return `${base} bg-[#F4F4F3] text-[#525252] border-[#E8E8E6]`;
+}
+
+function DemoRequestsTab() {
+  const [rows, setRows] = useState<DemoRow[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [working, setWorking] = useState<string | null>(null);
+  const [filter, setFilter] = useState<"new" | "contacted" | "scheduled" | "closed" | "all">("new");
+  const [search, setSearch] = useState("");
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/admin/demo-requests");
+      if (!res.ok) { toast.error("Failed to load demo requests"); return; }
+      setRows(await res.json());
+    } finally { setLoading(false); }
+  }, []);
+
+  useEffect(() => { load(); }, [load]);
+
+  async function setStatus(id: string, status: DemoRow["status"]) {
+    setWorking(id);
+    // optimistic update
+    setRows((prev) => prev.map((r) => r.id === id ? { ...r, status } : r));
+    try {
+      const res = await fetch("/api/admin/demo-requests", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id, status }),
+      });
+      if (!res.ok) { toast.error("Update failed"); await load(); return; }
+    } finally { setWorking(null); }
+  }
+
+  async function remove(id: string) {
+    if (!confirm("Delete this demo request? This cannot be undone.")) return;
+    setWorking(id);
+    try {
+      const res = await fetch("/api/admin/demo-requests", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id }),
+      });
+      if (!res.ok) { toast.error("Delete failed"); return; }
+      toast.success("Deleted");
+      setRows((prev) => prev.filter((r) => r.id !== id));
+    } finally { setWorking(null); }
+  }
+
+  const filtered = rows
+    .filter((r) => filter === "all" || r.status === filter)
+    .filter((r) => !search || [r.full_name, r.email, r.company, r.website]
+      .some((s) => s?.toLowerCase().includes(search.toLowerCase())));
+
+  const counts = {
+    new:       rows.filter((r) => r.status === "new").length,
+    contacted: rows.filter((r) => r.status === "contacted").length,
+    scheduled: rows.filter((r) => r.status === "scheduled").length,
+    closed:    rows.filter((r) => r.status === "closed").length,
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center gap-3 flex-wrap">
+        <div className="flex items-center bg-[#F0F0EE] rounded-xl p-1 gap-1 flex-wrap">
+          {(["new", "contacted", "scheduled", "closed", "all"] as const).map((t) => (
+            <button key={t} onClick={() => setFilter(t)}
+              className={`h-8 px-3 rounded-lg text-[12px] font-medium transition-colors capitalize flex items-center gap-1.5 ${filter === t ? "bg-white text-black shadow-sm" : "text-[#525252] hover:text-black"}`}>
+              {t}
+              {t !== "all" && counts[t] > 0 && (
+                <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full leading-none bg-blue-100 text-blue-700">
+                  {counts[t]}
+                </span>
+              )}
+            </button>
+          ))}
+        </div>
+        <div className="flex items-center gap-2 bg-white border border-[#E8E8E6] rounded-xl px-3 h-9 flex-1 max-w-xs">
+          <Search className="h-3.5 w-3.5 text-[#8C8C8C]" />
+          <input value={search} onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search name, email, company…" className="flex-1 text-[13px] outline-none bg-transparent" />
+        </div>
+        <button onClick={load} disabled={loading}
+          className="h-9 px-3 rounded-xl border border-[#E8E8E6] text-[12px] text-[#525252] hover:bg-white flex items-center gap-1.5 transition-colors disabled:opacity-50">
+          <RefreshCw className={`h-3 w-3 ${loading ? "animate-spin" : ""}`} /> Refresh
+        </button>
+        <span className="text-[12px] text-[#8C8C8C]">{filtered.length} request{filtered.length !== 1 ? "s" : ""}</span>
+      </div>
+
+      {loading ? <Spinner /> : filtered.length === 0 ? <Empty text="No demo requests match" /> : (
+        <div className="border border-[#E8E8E6] rounded-2xl bg-white overflow-x-auto">
+          <table className="w-full text-left min-w-[900px]">
+            <thead>
+              <tr className="border-b border-[#E8E8E6]">
+                {["Contact", "Company", "Message", "Received", "Status", ""].map((h) => (
+                  <th key={h} className="text-[11px] font-semibold text-[#8C8C8C] uppercase tracking-wide px-5 py-3.5">{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-[#F4F4F3]">
+              {filtered.map((r) => (
+                <tr key={r.id} className="hover:bg-[#FAFAF9] transition-colors align-top">
+                  <td className="px-5 py-4">
+                    <p className="text-[13px] font-semibold text-black">{r.full_name || "—"}</p>
+                    <a href={`mailto:${r.email}`} className="flex items-center gap-1 text-[11px] text-[#0e6dea] hover:opacity-80 mt-0.5">
+                      <Mail className="h-2.5 w-2.5" /> {r.email}
+                    </a>
+                    {r.phone && (
+                      <a href={`tel:${r.phone}`} className="flex items-center gap-1 text-[11px] text-[#8C8C8C] mt-0.5">
+                        <Phone className="h-2.5 w-2.5" /> {r.phone}
+                      </a>
+                    )}
+                  </td>
+                  <td className="px-5 py-4">
+                    <p className="text-[13px] text-black">{r.company || "—"}</p>
+                    {r.job_title && <p className="text-[11px] text-[#8C8C8C]">{r.job_title}</p>}
+                    {r.website && (
+                      <a href={r.website.startsWith("http") ? r.website : `https://${r.website}`}
+                        target="_blank" rel="noopener noreferrer"
+                        className="flex items-center gap-1 text-[11px] text-[#0e6dea] hover:opacity-80 mt-0.5">
+                        {r.website.replace(/^https?:\/\//, "")} <ExternalLink className="h-2.5 w-2.5" />
+                      </a>
+                    )}
+                  </td>
+                  <td className="px-5 py-4 max-w-[260px]">
+                    {r.message ? (
+                      <p className="text-[12px] text-[#525252] line-clamp-3">{r.message}</p>
+                    ) : (
+                      <span className="text-[12px] text-[#BDBDBB]">—</span>
+                    )}
+                  </td>
+                  <td className="px-5 py-4 text-[12px] text-[#8C8C8C] whitespace-nowrap">{fmt(r.created_at)}</td>
+                  <td className="px-5 py-4">
+                    <select
+                      value={r.status}
+                      disabled={working === r.id}
+                      onChange={(e) => setStatus(r.id, e.target.value as DemoRow["status"])}
+                      className={`h-7 pl-2 pr-1 rounded-lg border text-[11px] font-medium cursor-pointer disabled:opacity-50 outline-none ${demoStatusBadge(r.status)}`}
+                    >
+                      <option value="new">New</option>
+                      <option value="contacted">Contacted</option>
+                      <option value="scheduled">Scheduled</option>
+                      <option value="closed">Closed</option>
+                    </select>
+                  </td>
+                  <td className="px-5 py-4">
+                    <button onClick={() => remove(r.id)} disabled={working === r.id}
+                      className="p-1.5 rounded-lg text-[#8C8C8C] hover:text-red-600 hover:bg-red-50 transition-colors disabled:opacity-50">
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ── Shared ────────────────────────────────────────────────────────────────────
 
 function Spinner() {
@@ -742,7 +920,7 @@ function Empty({ text }: { text: string }) {
 
 // ── Main component ────────────────────────────────────────────────────────────
 
-type TabKey = "overview" | "applications" | "accounts" | "users" | "revenue" | "usage";
+type TabKey = "overview" | "applications" | "demo" | "accounts" | "users" | "revenue" | "usage";
 
 export function CustomerManagementClient() {
   const [tab, setTab]         = useState<TabKey>("overview");
@@ -760,6 +938,7 @@ export function CustomerManagementClient() {
   const tabs: { key: TabKey; label: string }[] = [
     { key: "overview",     label: "Overview" },
     { key: "applications", label: "Applications" },
+    { key: "demo",         label: "Demo requests" },
     { key: "accounts",     label: "Accounts" },
     { key: "users",        label: "Users" },
     { key: "revenue",      label: "Revenue" },
@@ -791,6 +970,7 @@ export function CustomerManagementClient() {
       {/* Tab content */}
       {tab === "overview"     && <OverviewTab stats={stats} loading={statsLoading} />}
       {tab === "applications" && <ApplicationsTab />}
+      {tab === "demo"         && <DemoRequestsTab />}
       {tab === "accounts"     && <AccountsTab />}
       {tab === "users"        && <UsersTab />}
       {tab === "revenue"      && <RevenueTab stats={stats} />}
