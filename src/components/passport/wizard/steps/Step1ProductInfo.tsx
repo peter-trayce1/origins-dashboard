@@ -286,7 +286,7 @@ export function Step1ProductInfo() {
             <span className="text-[10px] text-[#BDBDBB]">JPG, PNG, WebP up to 10MB</span>
           </button>
         )}
-        <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={handleFileSelect} />
+        <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/webp,image/avif" className="hidden" onChange={handleFileSelect} />
         {!step1.primary_image_url && (
           <>
             <div className="flex items-center gap-2">

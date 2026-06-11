@@ -34,11 +34,23 @@ export async function POST(request: NextRequest) {
 
   const service = createServiceClient();
 
+  const ALLOWED_IMAGE_TYPES = [
+    "image/jpeg", "image/png", "image/webp", "image/gif", "image/avif", "image/svg+xml",
+  ];
+
   // Create the bucket if it doesn't exist yet (idempotent — ignores "already exists")
   await service.storage.createBucket(BUCKET, {
     public: true,
     fileSizeLimit: 10485760,
-    allowedMimeTypes: ["image/jpeg", "image/png", "image/webp", "image/gif"],
+    allowedMimeTypes: ALLOWED_IMAGE_TYPES,
+  });
+
+  // createBucket is a no-op once the bucket exists, so update the allowed types
+  // explicitly to make sure an existing bucket also accepts AVIF.
+  await service.storage.updateBucket(BUCKET, {
+    public: true,
+    fileSizeLimit: 10485760,
+    allowedMimeTypes: ALLOWED_IMAGE_TYPES,
   });
 
   const { error } = await service.storage
