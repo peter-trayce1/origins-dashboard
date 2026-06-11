@@ -17,6 +17,48 @@ function isAdminEmail(email: string): boolean {
   return adminEmails.some((e) => e && e === email.toLowerCase());
 }
 
+// Generate a fresh temp password, set it on the org's owner, and email the
+// approval/credentials. Returns whether the email actually sent so the caller
+// can surface failures (rather than silently swallowing them).
+async function issueCredentialsAndEmail(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  serviceSupabase: any,
+  orgId: string,
+  brandName: string,
+  opts?: { onlyIfNeedsSetup?: boolean },
+): Promise<{ ok: boolean; error?: string }> {
+  const { data: members } = await serviceSupabase
+    .from("organisation_members")
+    .select("user_id")
+    .eq("organisation_id", orgId)
+    .limit(1);
+
+  const userId = members?.[0]?.user_id;
+  if (!userId) return { ok: false, error: "No member found for this workspace" };
+
+  const { data: authUser } = await serviceSupabase.auth.admin.getUserById(userId);
+  if (!authUser?.user?.email) return { ok: false, error: "No email on the account" };
+
+  // Don't reset the password of someone who has already completed setup
+  if (opts?.onlyIfNeedsSetup && authUser.user.user_metadata?.must_change_password === false) {
+    return { ok: false, error: "This user has already set their own password — ask them to use 'Forgot password' instead." };
+  }
+
+  const tempPassword = generateTempPassword();
+  await serviceSupabase.auth.admin.updateUserById(userId, {
+    password:      tempPassword,
+    user_metadata: { ...authUser.user.user_metadata, must_change_password: true },
+  });
+
+  return sendWorkspaceApproved({
+    to:        authUser.user.email,
+    fullName:  authUser.user.user_metadata?.full_name ?? "",
+    brandName,
+    tempPassword,
+    loginUrl:  `${process.env.NEXT_PUBLIC_APP_URL ?? "https://app.origins-id.com"}/login`,
+  });
+}
+
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -31,7 +73,7 @@ export async function POST(
   }
 
   const { action } = await request.json();
-  if (!["approve", "reject", "suspend"].includes(action)) {
+  if (!["approve", "reject", "suspend", "resend"].includes(action)) {
     return NextResponse.json({ error: "Invalid action" }, { status: 400 });
   }
 
@@ -60,38 +102,36 @@ export async function POST(
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-    // Generate a temporary password, set it on the account, and email it.
-    const { data: members } = await serviceSupabase
-      .from("organisation_members")
-      .select("user_id")
-      .eq("organisation_id", id)
-      .limit(1);
+    // Generate a temp password, set it on the account, and email it — awaited so
+    // we can tell the admin if the email failed instead of silently swallowing it.
+    const emailResult = await issueCredentialsAndEmail(serviceSupabase, id, org.name);
 
-    if (members?.[0]?.user_id) {
-      const { data: authUser } = await serviceSupabase.auth.admin.getUserById(members[0].user_id);
-      if (authUser?.user?.email) {
-        const tempPassword = generateTempPassword();
+    return NextResponse.json({
+      success:    true,
+      action:     "approved",
+      emailSent:  emailResult.ok,
+      emailError: emailResult.error,
+    });
+  }
 
-        // Set the temporary password and keep the must_change_password flag
-        await serviceSupabase.auth.admin.updateUserById(members[0].user_id, {
-          password:      tempPassword,
-          user_metadata: {
-            ...authUser.user.user_metadata,
-            must_change_password: true,
-          },
-        });
+  if (action === "resend") {
+    const { data: org, error } = await serviceSupabase
+      .from("organisations")
+      .select("name, organisation_status")
+      .eq("id", id)
+      .single();
 
-        sendWorkspaceApproved({
-          to:           authUser.user.email,
-          fullName:     authUser.user.user_metadata?.full_name ?? "",
-          brandName:    org.name,
-          tempPassword,
-          loginUrl:     `${process.env.NEXT_PUBLIC_APP_URL ?? "https://app.origins-id.com"}/login`,
-        }).catch(console.error);
-      }
+    if (error || !org) return NextResponse.json({ error: "Workspace not found" }, { status: 404 });
+    if (org.organisation_status !== "approved") {
+      return NextResponse.json({ error: "Only approved workspaces can have their email re-sent" }, { status: 400 });
     }
 
-    return NextResponse.json({ success: true, action: "approved" });
+    const emailResult = await issueCredentialsAndEmail(serviceSupabase, id, org.name, { onlyIfNeedsSetup: true });
+
+    if (!emailResult.ok) {
+      return NextResponse.json({ error: emailResult.error ?? "Email failed" }, { status: 502 });
+    }
+    return NextResponse.json({ success: true, action: "resent", emailSent: true });
   }
 
   if (action === "reject") {

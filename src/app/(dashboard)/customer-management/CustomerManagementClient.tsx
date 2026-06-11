@@ -189,7 +189,7 @@ function ApplicationsTab() {
 
   useEffect(() => { load(); }, [load]);
 
-  async function act(id: string, action: "approve" | "reject" | "suspend") {
+  async function act(id: string, action: "approve" | "reject" | "suspend" | "resend") {
     setWorking(id + action);
     try {
       const res = await fetch(`/api/admin/applications/${id}`, {
@@ -199,7 +199,18 @@ function ApplicationsTab() {
       });
       const data = await res.json();
       if (!res.ok) { toast.error(data.error ?? "Action failed"); return; }
-      toast.success(action === "approve" ? "Approved" : action === "reject" ? "Rejected" : "Suspended");
+
+      if (action === "approve") {
+        if (data.emailSent) {
+          toast.success("Approved — login details emailed");
+        } else {
+          toast.warning(`Approved, but the email did not send: ${data.emailError ?? "unknown error"}`);
+        }
+      } else if (action === "resend") {
+        toast.success("Approval email re-sent");
+      } else {
+        toast.success(action === "reject" ? "Rejected" : "Suspended");
+      }
       await load();
     } finally { setWorking(null); }
   }
@@ -299,11 +310,18 @@ function ApplicationsTab() {
                         </>
                       )}
                       {app.status === "approved" && (
-                        <button onClick={() => act(app.id, "suspend")} disabled={!!working}
-                          className="flex items-center gap-1 h-8 px-3 rounded-lg border border-[#E8E8E6] text-[12px] text-[#525252] hover:bg-[#F7F6F4] transition-colors disabled:opacity-50">
-                          {working === app.id + "suspend" ? <Loader2 className="h-3 w-3 animate-spin" /> : <PauseCircle className="h-3.5 w-3.5" />}
-                          Suspend
-                        </button>
+                        <>
+                          <button onClick={() => act(app.id, "resend")} disabled={!!working}
+                            className="flex items-center gap-1 h-8 px-3 rounded-lg border border-[#E8E8E6] text-[12px] text-[#525252] hover:bg-[#F7F6F4] transition-colors disabled:opacity-50">
+                            {working === app.id + "resend" ? <Loader2 className="h-3 w-3 animate-spin" /> : <Mail className="h-3.5 w-3.5" />}
+                            Resend email
+                          </button>
+                          <button onClick={() => act(app.id, "suspend")} disabled={!!working}
+                            className="flex items-center gap-1 h-8 px-3 rounded-lg border border-[#E8E8E6] text-[12px] text-[#525252] hover:bg-[#F7F6F4] transition-colors disabled:opacity-50">
+                            {working === app.id + "suspend" ? <Loader2 className="h-3 w-3 animate-spin" /> : <PauseCircle className="h-3.5 w-3.5" />}
+                            Suspend
+                          </button>
+                        </>
                       )}
                       {app.status === "suspended" && (
                         <button onClick={() => act(app.id, "approve")} disabled={!!working}

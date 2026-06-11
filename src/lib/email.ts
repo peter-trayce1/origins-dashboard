@@ -1,6 +1,6 @@
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
-const EMAIL_FROM     = process.env.EMAIL_FROM ?? "noreply@originsid.com";
-const APP_URL        = process.env.NEXT_PUBLIC_APP_URL ?? "https://originsid.com";
+const EMAIL_FROM     = process.env.EMAIL_FROM ?? "noreply@origins-id.com";
+const APP_URL        = process.env.NEXT_PUBLIC_APP_URL ?? "https://app.origins-id.com";
 
 interface SendEmailOptions {
   to: string;
@@ -8,22 +8,35 @@ interface SendEmailOptions {
   html: string;
 }
 
-async function sendEmail({ to, subject, html }: SendEmailOptions): Promise<void> {
+export interface SendResult {
+  ok: boolean;
+  error?: string;
+}
+
+async function sendEmail({ to, subject, html }: SendEmailOptions): Promise<SendResult> {
   if (!RESEND_API_KEY || RESEND_API_KEY === "re_...") {
-    console.log(`[email] Would send to ${to}: "${subject}"`);
-    return;
+    console.log(`[email] Would send to ${to}: "${subject}" (RESEND_API_KEY not configured)`);
+    return { ok: false, error: "Email is not configured (RESEND_API_KEY missing)" };
   }
-  const res = await fetch("https://api.resend.com/emails", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${RESEND_API_KEY}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ from: EMAIL_FROM, to, subject, html }),
-  });
-  if (!res.ok) {
-    const body = await res.text();
-    console.error(`[email] Failed to send to ${to}: ${body}`);
+  try {
+    const res = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${RESEND_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ from: EMAIL_FROM, to, subject, html }),
+    });
+    if (!res.ok) {
+      const body = await res.text();
+      console.error(`[email] Failed to send to ${to}: ${body}`);
+      return { ok: false, error: body || `Resend returned ${res.status}` };
+    }
+    return { ok: true };
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : "Unknown error";
+    console.error(`[email] Error sending to ${to}: ${msg}`);
+    return { ok: false, error: msg };
   }
 }
 
@@ -31,8 +44,8 @@ export async function sendApplicationReceived(opts: {
   to: string;
   fullName: string;
   brandName: string;
-}): Promise<void> {
-  await sendEmail({
+}): Promise<SendResult> {
+  return sendEmail({
     to: opts.to,
     subject: "We've received your Origins application",
     html: `
@@ -61,9 +74,9 @@ export async function sendWorkspaceApproved(opts: {
   brandName: string;
   tempPassword: string;
   loginUrl: string;
-}): Promise<void> {
+}): Promise<SendResult> {
   const onboardingUrl = process.env.NEXT_PUBLIC_ONBOARDING_URL;
-  await sendEmail({
+  return sendEmail({
     to: opts.to,
     subject: "Your Origins workspace is approved — here are your sign-in details",
     html: `
