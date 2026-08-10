@@ -55,7 +55,7 @@ export function SignupForm() {
       <CardHeader className="space-y-1">
         <CardTitle className="text-2xl font-semibold tracking-tight">Create your account</CardTitle>
         <CardDescription className="text-[#525252]">
-          Get started with OriginsID — free to try, no credit card required
+          Get started with Known Objects — free to try, no credit card required
         </CardDescription>
       </CardHeader>
       <CardContent>

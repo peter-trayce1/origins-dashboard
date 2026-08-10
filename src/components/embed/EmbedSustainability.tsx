@@ -90,7 +90,7 @@ export function EmbedSustainability({ passport, publicUrl, theme }: Props) {
         rel="noopener noreferrer"
         style={{ fontSize: 11, color: sub, textDecoration: "none", display: "flex", alignItems: "center", gap: 4 }}
       >
-        Full product passport via originsid.com →
+        Full product passport via knownobjects.io →
       </a>
     </div>
   );

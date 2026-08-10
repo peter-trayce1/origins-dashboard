@@ -163,7 +163,7 @@ export function BillingPageClient({ billing, success, cancelled }: Props) {
         <div className="flex items-center gap-3 bg-emerald-50 border border-emerald-200 rounded-xl px-4 py-3">
           <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
           <p className="text-sm text-emerald-800">
-            Your subscription is now active. Welcome to Origins — your passport limit has been updated.
+            Your subscription is now active. Welcome to Known Objects — your passport limit has been updated.
           </p>
         </div>
       )}
@@ -386,7 +386,7 @@ export function BillingPageClient({ billing, success, cancelled }: Props) {
           {[
             {
               icon: Package,
-              text: "1 organic cotton t-shirt style published in Origins",
+              text: "1 organic cotton t-shirt style published in Known Objects",
               result: "= 1 Active Product Passport used",
               accent: false,
             },
@@ -487,7 +487,7 @@ export function BillingPageClient({ billing, success, cancelled }: Props) {
 
                 {planKey === "enterprise" ? (
                   <a
-                    href="mailto:hello@originsid.com?subject=Enterprise%20enquiry"
+                    href="mailto:hello@knownobjects.io?subject=Enterprise%20enquiry"
                     className="w-full h-9 rounded-xl border border-[#E8E8E6] text-[13px] font-medium text-black hover:bg-[#F7F6F4] transition-colors flex items-center justify-center gap-1.5"
                   >
                     Talk to us
@@ -572,7 +572,7 @@ export function BillingPageClient({ billing, success, cancelled }: Props) {
       {/* Bottom note */}
       <p className="text-[11px] text-[#8C8C8C] text-center pb-4">
         All prices in GBP. Subscriptions renew automatically. Cancel anytime through the billing portal.{" "}
-        <a href="mailto:hello@originsid.com" className="underline hover:text-black">Contact us</a> with any billing questions.
+        <a href="mailto:hello@knownobjects.io" className="underline hover:text-black">Contact us</a> with any billing questions.
       </p>
     </div>
   );

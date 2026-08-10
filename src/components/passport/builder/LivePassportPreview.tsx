@@ -491,7 +491,7 @@ export function LivePassportPreview({
             ) : (
               <span className="text-[12px] font-bold text-black tracking-tight uppercase">{displayBrandName}</span>
             )}
-            <span className="text-[7px] text-[#BDBDBB] tracking-wide font-mono">ID by Origins</span>
+            <span className="text-[7px] text-[#BDBDBB] tracking-wide font-mono">Known Objects</span>
           </div>
 
           {/* Product identity strip — always visible */}
@@ -841,7 +841,7 @@ export function LivePassportPreview({
                 {/* Origins timeline */}
                 {sortedFacilities.length > 0 && (
                   <div className="px-3 pt-4">
-                    <p className="text-[10px] font-mono uppercase tracking-widest text-[#8b8b8b] mb-3 px-0.5">Product Origins</p>
+                    <p className="text-[10px] font-mono uppercase tracking-widest text-[#8b8b8b] mb-3 px-0.5">Product Journey</p>
                     <div>
                       {sortedFacilities.map((f, idx) => (
                         <SmallTimelineNode key={idx} facility={f} isLast={idx === sortedFacilities.length - 1} index={idx} />
@@ -966,7 +966,7 @@ export function LivePassportPreview({
               ) : (
                 <p className="text-[11px] font-bold text-white uppercase tracking-tight mb-2.5">{displayBrandName}</p>
               )}
-              <p className="text-[7px] text-[#888] font-mono">◉ Digital Product Passport by Origins</p>
+              <p className="text-[7px] text-[#888] font-mono">◉ Digital Product Passport by Known Objects</p>
             </div>
           </div>
 
@@ -989,7 +989,7 @@ export function LivePassportPreview({
             </div>
             <div className="flex items-center justify-center gap-1 py-1 border-t border-[#f5f5f3]">
               <ShieldCheck className="h-2.5 w-2.5 text-[#aaa]" strokeWidth={1.5} />
-              <span className="text-[7px] font-mono text-[#bbb]">Origins.ID</span>
+              <span className="text-[7px] font-mono text-[#bbb]">Known Objects</span>
             </div>
           </div>
         </div>

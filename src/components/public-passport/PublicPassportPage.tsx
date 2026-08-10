@@ -180,16 +180,14 @@ const COUNTRY_FLAGS: Record<string, string> = {
   "United States": "🇺🇸", "Vietnam": "🇻🇳", "Wales": "🏴󠁧󠁢󠁷󠁬󠁳󠁿", "Other": "🌍",
 };
 
-// ─── Origins logomark ──────────────────────────────────────────────────────
+// ─── Known Objects logomark ─────────────────────────────────────────────────
 
 function OriginsLogo({ className = "w-4 h-4" }: { className?: string }) {
+  // Minimal KO mark — two overlapping circles representing "Known Objects"
   return (
     <svg viewBox="0 0 20 20" fill="none" className={className} aria-hidden="true">
-      <circle cx="4"  cy="2.5"  r="1"   fill="currentColor" />
-      <circle cx="4"  cy="10"   r="2"   fill="currentColor" />
-      <circle cx="4"  cy="17.5" r="3"   fill="currentColor" />
-      <circle cx="13" cy="6.5"  r="2.4" fill="currentColor" />
-      <circle cx="13" cy="14"   r="1.6" fill="currentColor" />
+      <circle cx="7"  cy="10" r="5.5" stroke="currentColor" strokeWidth="1.5" />
+      <circle cx="13" cy="10" r="5.5" stroke="currentColor" strokeWidth="1.5" />
     </svg>
   );
 }
@@ -1058,7 +1056,7 @@ export function PublicPassportPage({ passport, previewMode = false }: { passport
           <div className="flex items-center gap-1.5 text-[11px] text-[#8b8b8b] shrink-0">
             <span>ID by</span>
             <OriginsLogo className="w-3.5 h-3.5" />
-            <span className="font-medium text-[#555]">Origins</span>
+            <span className="font-medium text-[#555]">Known Objects</span>
           </div>
         </div>
       </header>
@@ -1625,7 +1623,7 @@ export function PublicPassportPage({ passport, previewMode = false }: { passport
           )}
           <p className="text-[10px] text-[#666] font-mono flex items-center gap-1.5">
             <OriginsLogo className="w-3 h-3" />
-            Digital Product Passport by Origins
+            Digital Product Passport by Known Objects
           </p>
         </footer>
       </div>
@@ -1661,7 +1659,7 @@ export function PublicPassportPage({ passport, previewMode = false }: { passport
           </div>
           <div className="flex items-center justify-center gap-1 py-1.5 border-t border-[#f5f5f3]">
             <ShieldCheck className="h-3 w-3 text-[#8b8b8b]" strokeWidth={1.5} />
-            <span className="text-[9px] font-mono text-[#aaa]">Origins.ID</span>
+            <span className="text-[9px] font-mono text-[#aaa]">Known Objects</span>
           </div>
         </div>
       </div>

@@ -102,7 +102,7 @@ export default function AdminApplicationsPage() {
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-6">
-            <Image src="/logo-dark.png" alt="Origins" width={100} height={22} style={{ height: 22, width: "auto" }} />
+            <Image src="/logo-dark.png" alt="Known Objects" width={100} height={22} style={{ height: 22, width: "auto" }} />
             <div className="h-5 w-px bg-[#E8E8E6]" />
             <h1 className="text-[16px] font-semibold text-black">Workspace Applications</h1>
           </div>

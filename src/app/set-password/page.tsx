@@ -54,7 +54,7 @@ export default function SetPasswordPage() {
 
         {/* Logo */}
         <div className="flex justify-center mb-10">
-          <Image src="/logo-dark.png" alt="Origins" width={110} height={24} style={{ height: 24, width: "auto" }} priority />
+          <Image src="/logo-dark.png" alt="Known Objects" width={110} height={24} style={{ height: 24, width: "auto" }} priority />
         </div>
 
         {/* Card */}
@@ -62,7 +62,7 @@ export default function SetPasswordPage() {
           <div>
             <h1 className="text-[22px] font-semibold tracking-tight text-black mb-1">Create your password</h1>
             <p className="text-[14px] text-[#525252] leading-relaxed">
-              Choose a secure password for your Origins account.
+              Choose a secure password for your Known Objects account.
             </p>
           </div>
 

@@ -444,7 +444,7 @@ export function SupplierForm({ code }: { code: string }) {
             </p>
           )}
           <div className="mt-8 text-[11px] text-[#BDBDBB] font-mono tracking-wider uppercase">
-            Powered by OriginsID
+            Powered by Known Objects
           </div>
         </div>
       </div>
@@ -546,7 +546,7 @@ export function SupplierForm({ code }: { code: string }) {
       {/* Footer */}
       <div className="fixed bottom-0 inset-x-0 pointer-events-none flex justify-center pb-4">
         <div className="text-[10px] font-mono text-[#BDBDBB] tracking-widest uppercase">
-          Powered by OriginsID
+          Powered by Known Objects
         </div>
       </div>
     </div>

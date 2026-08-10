@@ -261,7 +261,7 @@ export default function BulkUploadPage() {
                 'Certifications: "GOTS; OEKO-TEX; GRS"',
                 'Care: "Machine wash 30°C; Do not tumble dry"',
                 "Column names don't need to match exactly",
-                "Origins auto-recognises common naming styles",
+                "Known Objects auto-recognises common naming styles",
               ].map((tip) => (
                 <p key={tip} className="text-[11px] text-[#525252] flex items-start gap-1.5">
                   <ChevronRight className="h-3 w-3 text-[#BDBDBB] shrink-0 mt-0.5" />

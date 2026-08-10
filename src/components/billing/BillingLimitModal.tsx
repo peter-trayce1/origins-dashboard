@@ -51,7 +51,7 @@ export function BillingLimitModal({ open, onClose, plan, limit }: Props) {
         <div className="flex gap-2 pt-1">
           {isGrowth ? (
             <a
-              href="mailto:hello@originsid.com?subject=Enterprise%20enquiry"
+              href="mailto:hello@knownobjects.io?subject=Enterprise%20enquiry"
               className="flex-1 h-9 rounded-xl bg-black text-white text-[13px] font-medium hover:bg-[#1C1C1E] transition-colors flex items-center justify-center"
             >
               Talk to us

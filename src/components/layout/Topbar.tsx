@@ -38,7 +38,7 @@ export function Topbar() {
       {/* Mobile logo */}
       <div className="flex items-center lg:hidden">
         <Link href="/dashboard">
-          <Image src="/logo-dark.png" alt="Origins" width={80} height={18} className="object-contain" style={{ height: 18, width: "auto" }} priority />
+          <Image src="/logo-dark.png" alt="Known Objects" width={80} height={18} className="object-contain" style={{ height: 18, width: "auto" }} priority />
         </Link>
       </div>
 

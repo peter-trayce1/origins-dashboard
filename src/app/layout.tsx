@@ -19,11 +19,11 @@ const dmMono = DM_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "OriginsID — Digital Product Passports",
-    template: "%s — OriginsID",
+    default: "Known Objects — Digital Product Passports",
+    template: "%s — Known Objects",
   },
   description:
-    "Create beautiful Digital Product Passports in minutes. Turn every product into a story, QR code, and trusted digital identity.",
+    "Create Digital Product Passports in minutes. Turn every product into a story, QR code, and trusted digital identity.",
   metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"),
 };
 

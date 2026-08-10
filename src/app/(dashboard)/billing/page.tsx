@@ -7,7 +7,7 @@ import { isStripeConfigured } from "@/lib/stripe";
 import type { Metadata } from "next";
 import type { BillingInfo } from "@/types/billing";
 
-export const metadata: Metadata = { title: "Billing — Origins" };
+export const metadata: Metadata = { title: "Billing — Known Objects" };
 
 // Demo fallback shown when Stripe is not yet configured
 const DEMO_BILLING: BillingInfo = {
@@ -64,7 +64,7 @@ export default async function BillingPage({
     <div className="space-y-8">
       <PageHeader
         title="Billing"
-        description="Manage your Origins subscription, payment method and Active Product Passport usage."
+        description="Manage your Known Objects subscription, payment method and Active Product Passport usage."
       />
       <BillingPageClient billing={billing} success={success} cancelled={cancelled} />
     </div>

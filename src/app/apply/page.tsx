@@ -292,7 +292,7 @@ export default function ApplyPage() {
       <div className="min-h-screen bg-[#F9F9F8] flex flex-col items-center justify-center p-6">
         <div className="w-full max-w-lg">
           <div className="flex justify-center mb-10">
-            <Image src="/logo-dark.png" alt="Origins" width={110} height={24} style={{ height: 24, width: "auto" }} priority />
+            <Image src="/logo-dark.png" alt="Known Objects" width={110} height={24} style={{ height: 24, width: "auto" }} priority />
           </div>
 
           <div className="bg-white rounded-2xl border border-[#E8E8E6] p-8 space-y-6">
@@ -303,7 +303,7 @@ export default function ApplyPage() {
             <div>
               <h1 className="text-2xl font-semibold tracking-tight text-black mb-2">Application received</h1>
               <p className="text-[14px] text-[#525252] leading-relaxed">
-                Thank you for applying to Origins. Our team reviews every workspace request to ensure
+                Thank you for applying to Known Objects. Our team reviews every workspace request to ensure
                 we provide the best onboarding experience and maintain high-quality Digital Product
                 Passport data across the platform.
               </p>
@@ -357,7 +357,7 @@ export default function ApplyPage() {
 
         {/* Logo */}
         <div className="flex justify-between items-center mb-12">
-          <Image src="/logo-dark.png" alt="Origins" width={110} height={24} style={{ height: 24, width: "auto" }} priority />
+          <Image src="/logo-dark.png" alt="Known Objects" width={110} height={24} style={{ height: 24, width: "auto" }} priority />
           <span className="text-[13px] text-[#8C8C8C]">
             Already have an account?{" "}
             <Link href="/dashboard" className="text-black font-medium hover:underline">Sign in</Link>
@@ -370,7 +370,7 @@ export default function ApplyPage() {
             Start your Digital Product<br />Passport programme
           </h1>
           <p className="text-[15px] text-[#525252] leading-relaxed max-w-lg">
-            Create an Origins workspace and publish your first product passports in minutes.
+            Create a Known Objects workspace and publish your first product passports in minutes.
             Every application is reviewed by our team to ensure the best onboarding experience.
           </p>
         </div>

@@ -33,7 +33,7 @@ export async function GET(
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Coming soon — OriginsID</title>
+  <title>Coming soon — Known Objects</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
@@ -52,7 +52,7 @@ export async function GET(
   <div class="code">${code}</div>
   <h1>${name}'s passport is coming soon.</h1>
   <p>The brand is still preparing this product's digital passport. Check back soon.</p>
-  <div class="badge">Powered by OriginsID</div>
+  <div class="badge">Powered by Known Objects</div>
 </body>
 </html>`,
     { status: 200, headers: { "Content-Type": "text/html; charset=utf-8" } }

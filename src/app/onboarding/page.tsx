@@ -64,7 +64,7 @@ export default async function OnboardingPage() {
       <div className="w-full max-w-xl">
         <div className="text-center mb-8">
           <div className="flex justify-center mb-4">
-            <Image src="/logo-dark.png" alt="Origins" width={100} height={22} className="object-contain" style={{ height: 22, width: "auto" }} priority />
+            <Image src="/logo-dark.png" alt="Known Objects" width={100} height={22} className="object-contain" style={{ height: 22, width: "auto" }} priority />
           </div>
           <h1 className="text-2xl font-semibold tracking-tight text-black">
             Set up your brand

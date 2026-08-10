@@ -55,7 +55,7 @@ async function issueCredentialsAndEmail(
     fullName:  authUser.user.user_metadata?.full_name ?? "",
     brandName,
     tempPassword,
-    loginUrl:  `${process.env.NEXT_PUBLIC_APP_URL ?? "https://app.origins-id.com"}/login`,
+    loginUrl:  `${process.env.NEXT_PUBLIC_APP_URL ?? "https://app.knownobjects.io"}/login`,
   });
 }
 

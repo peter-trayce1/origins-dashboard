@@ -32,7 +32,7 @@ export function QRPreviewCard({ qrId, url, productName, brandName }: QRPreviewCa
         </div>
         <div className="text-center">
           <p className="text-xs text-[#525252]">Scan to view product passport</p>
-          <p className="text-[10px] text-[#8C8C8C] mt-0.5">originsid.com</p>
+          <p className="text-[10px] text-[#8C8C8C] mt-0.5">knownobjects.io</p>
         </div>
       </div>
 

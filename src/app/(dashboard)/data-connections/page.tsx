@@ -33,7 +33,7 @@ const CONNECTIONS = [
   },
   {
     name: "REST API",
-    description: "Use the OriginsID API to push data from any system — PLM, ERP, or custom platforms.",
+    description: "Use the Known Objects API to push data from any system — PLM, ERP, or custom platforms.",
     logo: "⚡",
     status: "available",
   },
@@ -44,7 +44,7 @@ export default function DataConnectionsPage() {
     <div className="space-y-8">
       <PageHeader
         title="Data connections"
-        description="Connect OriginsID to your existing systems to keep passport data fresh automatically."
+        description="Connect Known Objects to your existing systems to keep passport data fresh automatically."
       />
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -78,8 +78,8 @@ export default function DataConnectionsPage() {
         <p className="text-sm font-medium text-black mb-1">Request an integration</p>
         <p className="text-xs text-[#525252]">
           Need a specific integration? Let us know at{" "}
-          <a href="mailto:integrations@originsid.com" className="underline hover:text-black">
-            integrations@originsid.com
+          <a href="mailto:hello@knownobjects.io" className="underline hover:text-black">
+            hello@knownobjects.io
           </a>
         </p>
       </div>

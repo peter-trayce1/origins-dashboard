@@ -6,7 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createClient as createServiceClient } from "@supabase/supabase-js";
 import type { Metadata } from "next";
 
-export const metadata: Metadata = { title: "Workspace under review — Origins" };
+export const metadata: Metadata = { title: "Workspace under review — Known Objects" };
 
 const PLAN_LABELS: Record<string, string> = {
   essentials: "Essentials (£375/month)",
@@ -71,7 +71,7 @@ export default async function PendingPage() {
     <div className="min-h-screen bg-[#F9F9F8] flex flex-col items-center justify-center p-6">
       <div className="w-full max-w-md">
         <div className="flex justify-center mb-10">
-          <Image src="/logo-dark.png" alt="Origins" width={110} height={24} style={{ height: 24, width: "auto" }} priority />
+          <Image src="/logo-dark.png" alt="Known Objects" width={110} height={24} style={{ height: 24, width: "auto" }} priority />
         </div>
 
         <div className="bg-white rounded-2xl border border-[#E8E8E6] p-8 space-y-6">
@@ -125,7 +125,7 @@ export default async function PendingPage() {
 
         <p className="text-center text-[12px] text-[#8C8C8C] mt-6">
           Questions?{" "}
-          <a href="mailto:hello@originsid.com" className="underline hover:text-black">Contact our team</a>
+          <a href="mailto:hello@knownobjects.io" className="underline hover:text-black">Contact our team</a>
         </p>
       </div>
     </div>

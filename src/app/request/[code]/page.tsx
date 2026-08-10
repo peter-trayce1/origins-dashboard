@@ -1,7 +1,7 @@
 import { Metadata } from "next";
 import { SupplierForm } from "./SupplierForm";
 
-export const metadata: Metadata = { title: "Supplier Data Request — OriginsID" };
+export const metadata: Metadata = { title: "Supplier Data Request — Known Objects" };
 
 export default async function RequestPage({
   params,

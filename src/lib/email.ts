@@ -1,6 +1,9 @@
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
+// EMAIL_FROM is set via the EMAIL_FROM environment variable.
+// Do not change the fallback here until the knownobjects.io sending domain
+// is verified in Resend and the env var is updated in Vercel.
 const EMAIL_FROM     = process.env.EMAIL_FROM ?? "noreply@origins-id.com";
-const APP_URL        = process.env.NEXT_PUBLIC_APP_URL ?? "https://app.origins-id.com";
+const APP_URL        = process.env.NEXT_PUBLIC_APP_URL ?? "https://app.knownobjects.io";
 
 interface SendEmailOptions {
   to: string;
@@ -47,22 +50,22 @@ export async function sendApplicationReceived(opts: {
 }): Promise<SendResult> {
   return sendEmail({
     to: opts.to,
-    subject: "We've received your Origins application",
+    subject: "We've received your Known Objects application",
     html: `
       <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;max-width:560px;margin:0 auto;padding:40px 24px;color:#333;">
-        <img src="${APP_URL}/logo-dark.png" alt="Origins" height="22" style="margin-bottom:32px;" />
+        <img src="${APP_URL}/logo-dark.png" alt="Known Objects" height="22" style="margin-bottom:32px;" />
         <h1 style="font-size:22px;font-weight:600;margin:0 0 12px;">We've received your application</h1>
         <p style="font-size:15px;line-height:1.6;color:#525252;margin:0 0 16px;">
           Hi ${opts.fullName},
         </p>
         <p style="font-size:15px;line-height:1.6;color:#525252;margin:0 0 16px;">
-          Thank you for applying to Origins with <strong>${opts.brandName}</strong>.
+          Thank you for applying to Known Objects with <strong>${opts.brandName}</strong>.
           Our team reviews every workspace request to ensure the best onboarding experience.
         </p>
         <p style="font-size:15px;line-height:1.6;color:#525252;margin:0 0 32px;">
           Most applications are reviewed within one business day. We'll be in touch shortly.
         </p>
-        <p style="font-size:13px;color:#8c8c8c;">The Origins team</p>
+        <p style="font-size:13px;color:#8c8c8c;">The Known Objects team</p>
       </div>
     `,
   });
@@ -78,16 +81,16 @@ export async function sendWorkspaceApproved(opts: {
   const onboardingUrl = process.env.NEXT_PUBLIC_ONBOARDING_URL;
   return sendEmail({
     to: opts.to,
-    subject: "Your Origins workspace is approved — here are your sign-in details",
+    subject: "Your Known Objects workspace is approved — here are your sign-in details",
     html: `
       <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;max-width:560px;margin:0 auto;padding:40px 24px;color:#333;">
-        <img src="${APP_URL}/logo-dark.png" alt="Origins" height="22" style="margin-bottom:32px;" />
+        <img src="${APP_URL}/logo-dark.png" alt="Known Objects" height="22" style="margin-bottom:32px;" />
         <h1 style="font-size:22px;font-weight:600;margin:0 0 12px;">Your workspace is approved</h1>
         <p style="font-size:15px;line-height:1.6;color:#525252;margin:0 0 16px;">
           Hi ${opts.fullName},
         </p>
         <p style="font-size:15px;line-height:1.6;color:#525252;margin:0 0 24px;">
-          Your Origins workspace for <strong>${opts.brandName}</strong> has been approved.
+          Your Known Objects workspace for <strong>${opts.brandName}</strong> has been approved.
           Use the details below to sign in — you'll be prompted to create your own password
           straight away.
         </p>
@@ -107,7 +110,7 @@ export async function sendWorkspaceApproved(opts: {
         </div>
 
         <a href="${opts.loginUrl}" style="display:inline-block;background:#000;color:#fff;font-size:14px;font-weight:600;padding:12px 24px;border-radius:10px;text-decoration:none;margin-bottom:28px;">
-          Sign in to Origins →
+          Sign in to Known Objects →
         </a>
 
         <p style="font-size:13px;line-height:1.6;color:#8c8c8c;margin:0 0 8px;">
@@ -121,7 +124,7 @@ export async function sendWorkspaceApproved(opts: {
         <a href="${onboardingUrl}" style="font-size:13px;color:#0e6dea;">Book an onboarding call</a>
         ` : ""}
 
-        <p style="font-size:13px;color:#8c8c8c;margin-top:32px;">The Origins team</p>
+        <p style="font-size:13px;color:#8c8c8c;margin-top:32px;">The Known Objects team</p>
       </div>
     `,
   });

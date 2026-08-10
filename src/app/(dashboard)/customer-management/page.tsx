@@ -4,7 +4,7 @@ import { isSuperAdmin } from "@/lib/super-admin";
 import { CustomerManagementClient } from "./CustomerManagementClient";
 import type { Metadata } from "next";
 
-export const metadata: Metadata = { title: "Customer Management — Origins" };
+export const metadata: Metadata = { title: "Customer Management — Known Objects" };
 
 export default async function CustomerManagementPage() {
   const supabase = await createClient();

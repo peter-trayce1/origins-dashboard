@@ -27,7 +27,7 @@ export const TEMPLATES: TemplateConfig[] = [
     id: "quick",
     label: "Quick Start",
     description: "8 essential fields. Get passports created in minutes.",
-    filename: "originsid-quick-start.csv",
+    filename: "knownobjects-quick-start.csv",
     csv: QUICK_CSV,
   },
   {
@@ -36,14 +36,14 @@ export const TEMPLATES: TemplateConfig[] = [
     badge: "Recommended",
     description: "16 fields covering the full product story. The best starting point for most brands.",
     recommended: true,
-    filename: "originsid-standard.csv",
+    filename: "knownobjects-standard.csv",
     csv: STANDARD_CSV,
   },
   {
     id: "advanced",
     label: "Advanced",
     description: "All supported fields including impact metrics, imagery, and sizing.",
-    filename: "originsid-advanced.csv",
+    filename: "knownobjects-advanced.csv",
     csv: ADVANCED_CSV,
   },
 ];
