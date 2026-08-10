@@ -24,7 +24,7 @@ export async function GET() {
 
 function generatePassportCode(): string {
   const digits = Math.floor(10000000 + Math.random() * 90000000).toString();
-  return `ORI-${digits}`;
+  return `KO-${digits}`;
 }
 
 export async function POST(request: NextRequest) {

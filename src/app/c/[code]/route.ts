@@ -7,23 +7,80 @@ export async function GET(
   { params }: { params: Promise<{ code: string }> }
 ) {
   const { code } = await params;
+  console.log(`[/c/[code]] Resolving passport code: ${code}`);
+
   const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!,
     { auth: { autoRefreshToken: false, persistSession: false } }
   );
 
-  const { data } = await supabase
+  // Primary lookup — exact match on whatever code was scanned.
+  // Use .maybeSingle() instead of .single() because missing row is an expected condition
+  // that we handle with the fallback lookup. .single() would throw an error.
+  const { data: exactData, error: exactError } = await supabase
     .from("passports")
     .select("slug, status, product_name")
     .eq("passport_code", code)
-    .single();
+    .maybeSingle();
 
-  if (!data) redirect("/");
+  console.log(`[/c/[code]] Exact lookup (${code}):`, {
+    foundRow: !!exactData,
+    error: exactError ? exactError.message : null,
+    data: exactData ? {
+      status: exactData.status,
+      slug: exactData.slug,
+      product_name: exactData.product_name,
+    } : null,
+  });
+
+  let data = exactData;
+
+  // Backwards-compatibility for legacy ORI- QR codes that are already printed
+  // and in the wild. The DB now stores KO-XXXXXXXX, but the physical label still
+  // encodes /c/ORI-XXXXXXXX. We silently resolve it to the KO- equivalent so the
+  // QR continues working without any URL change visible to the end user.
+  if (!data && code.startsWith("ORI-")) {
+    const koCode = "KO-" + code.slice(4); // "ORI-12345678" → "KO-12345678"
+    console.log(`[/c/[code]] Fallback: Converting ${code} → ${koCode}`);
+
+    const { data: fallbackData, error: fallbackError } = await supabase
+      .from("passports")
+      .select("slug, status, product_name")
+      .eq("passport_code", koCode)
+      .maybeSingle();
+
+    console.log(`[/c/[code]] Fallback lookup (${koCode}):`, {
+      foundRow: !!fallbackData,
+      error: fallbackError ? fallbackError.message : null,
+      data: fallbackData ? {
+        status: fallbackData.status,
+        slug: fallbackData.slug,
+        product_name: fallbackData.product_name,
+      } : null,
+    });
+
+    data = fallbackData;
+  }
+
+  if (!data) {
+    console.log(`[/c/[code]] No passport found for ${code}, redirecting to /`);
+    redirect("/");
+  }
+
+  console.log(`[/c/[code]] Resolved passport:`, {
+    code,
+    status: data.status,
+    slug: data.slug,
+  });
 
   if (data.status === "published" && data.slug) {
-    redirect(`/p/${data.slug}`);
+    console.log(`[/c/[code]] Passport is published, redirecting to public domain`);
+    const publicPassportUrl = process.env.NEXT_PUBLIC_PUBLIC_PASSPORT_URL ?? "https://passport.knownobjects.io";
+    redirect(`${publicPassportUrl}/p/${data.slug}`);
   }
+
+  console.log(`[/c/[code]] Passport status is "${data.status}" (not "published"), showing holding page`);
 
   // Draft — return a simple branded holding page
   const name = data.product_name ? `<strong>${data.product_name}</strong>` : "This product";
