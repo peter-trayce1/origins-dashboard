@@ -38,13 +38,13 @@ export const PLAN_CONFIG: Record<Exclude<BillingPlan, "none" | "trial">, PlanCon
   essentials: {
     id: "essentials",
     label: "Essentials",
-    passportLimit: 250,
-    monthlyPrice: 375,
-    annualPrice: 3750,
+    passportLimit: 100,
+    monthlyPrice: 150,
+    annualPrice: 1500,
     monthlyPriceId: process.env.STRIPE_PRICE_ESSENTIALS_MONTHLY,
     annualPriceId: process.env.STRIPE_PRICE_ESSENTIALS_ANNUAL,
     features: [
-      "Up to 250 Active Product Passports per year",
+      "Up to 100 Active Product Passports per year",
       "Unlimited QR scans",
       "AI Passport Builder",
       "Public Passport Pages",
@@ -59,14 +59,14 @@ export const PLAN_CONFIG: Record<Exclude<BillingPlan, "none" | "trial">, PlanCon
   growth: {
     id: "growth",
     label: "Growth",
-    passportLimit: 750,
-    monthlyPrice: 795,
-    annualPrice: 7950,
+    passportLimit: 500,
+    monthlyPrice: 450,
+    annualPrice: 4500,
     monthlyPriceId: process.env.STRIPE_PRICE_GROWTH_MONTHLY,
     annualPriceId: process.env.STRIPE_PRICE_GROWTH_ANNUAL,
     highlighted: true,
     features: [
-      "Up to 750 Active Product Passports per year",
+      "Up to 500 Active Product Passports per year",
       "Everything in Essentials",
       "Supplier Data Requests",
       "Advanced Analytics",
@@ -85,7 +85,7 @@ export const PLAN_CONFIG: Record<Exclude<BillingPlan, "none" | "trial">, PlanCon
     monthlyPriceId: undefined,
     annualPriceId: undefined,
     features: [
-      "Unlimited Active Product Passports per year",
+      "Custom / unlimited Active Product Passports per year",
       "ERP / PLM Integrations",
       "API Access",
       "Supplier Portal",
@@ -96,10 +96,14 @@ export const PLAN_CONFIG: Record<Exclude<BillingPlan, "none" | "trial">, PlanCon
   },
 };
 
+// Fallback limits for when passport_limit is not set on the organisation.
+// Note: The webhook sets passport_limit based on the actual price ID,
+// so these are only used as fallbacks. New subscriptions will have 100/500,
+// while legacy subscriptions will keep 250/750.
 export const PASSPORT_LIMITS: Record<BillingPlan, number | null> = {
   none: 0,
   trial: 3,
-  essentials: 250,
-  growth: 750,
+  essentials: 100,
+  growth: 500,
   enterprise: null,
 };

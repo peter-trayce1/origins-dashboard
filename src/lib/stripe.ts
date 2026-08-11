@@ -29,12 +29,11 @@ export const PRICE_IDS = {
     monthly: process.env.STRIPE_PRICE_GROWTH_MONTHLY,
     annual:  process.env.STRIPE_PRICE_GROWTH_ANNUAL,
   },
-  // Optional expansion packs
-  // TODO: Set these in .env.local when Stripe prices are created
+  // Expansion packs (recurring monthly add-ons)
+  pack100: {
+    monthly: process.env.STRIPE_PRICE_PACK_100_MONTHLY,
+  },
   pack250: {
     monthly: process.env.STRIPE_PRICE_PACK_250_MONTHLY,
-  },
-  pack500: {
-    monthly: process.env.STRIPE_PRICE_PACK_500_MONTHLY,
   },
 } as const;

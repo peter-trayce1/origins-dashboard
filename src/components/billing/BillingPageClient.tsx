@@ -112,9 +112,9 @@ export function BillingPageClient({ billing, success, cancelled }: Props) {
   // Use the actual subscription interval from the DB, not the pricing toggle state
   const activeInterval = billingInterval ?? "monthly";
   const nextInvoiceAmt = billingPlan === "essentials"
-    ? (activeInterval === "monthly" ? "£375" : "£3,750")
+    ? (activeInterval === "monthly" ? "£150" : "£1,500")
     : billingPlan === "growth"
-      ? (activeInterval === "monthly" ? "£795" : "£7,950")
+      ? (activeInterval === "monthly" ? "£450" : "£4,500")
       : null;
 
   async function handleCheckout(plan: "essentials" | "growth") {
@@ -267,7 +267,7 @@ export function BillingPageClient({ billing, success, cancelled }: Props) {
             {billingPlan !== "none" && (
               <div className="text-right shrink-0">
                 <p className="text-[13px] font-semibold text-black">
-                  {billingPlan !== "enterprise" ? (activeInterval === "monthly" ? (billingPlan === "essentials" ? "£375/mo" : "£795/mo") : (billingPlan === "essentials" ? "£3,750/yr" : "£7,950/yr")) : "Custom"}
+                  {billingPlan !== "enterprise" ? (activeInterval === "monthly" ? (billingPlan === "essentials" ? "£150/mo" : "£450/mo") : (billingPlan === "essentials" ? "£1,500/yr" : "£4,500/yr")) : "Custom"}
                 </p>
                 <p className="text-[11px] text-[#8C8C8C] capitalize">{billing.billingInterval ?? ""} billing</p>
               </div>
@@ -522,13 +522,13 @@ export function BillingPageClient({ billing, success, cancelled }: Props) {
         <div>
           <p className="text-[13px] font-semibold text-black">Passport expansion packs</p>
           <p className="text-[12px] text-[#525252] mt-0.5">
-            Need a few more passports without changing your plan? Add extra capacity as you grow.
+            Need a few more passports without changing your plan? Add extra capacity for your current subscription year.
           </p>
         </div>
         <div className="grid sm:grid-cols-2 gap-3">
           {[
-            { label: "+250 Active Product Passports", price: "£150/month", priceKey: "pack250" },
-            { label: "+500 Active Product Passports", price: "£350/month", priceKey: "pack500" },
+            { label: "+100 Active Product Passports", price: "£100/month", priceKey: "pack100" },
+            { label: "+250 Active Product Passports", price: "£200/month", priceKey: "pack250" },
           ].map((pack) => (
             <div key={pack.priceKey} className="flex items-center justify-between p-3.5 rounded-xl border border-[#E8E8E6] bg-[#F9F9F8]">
               <div>

@@ -74,10 +74,18 @@ export async function canPublishPassport(
 }
 
 export function planFromPriceId(priceId: string): { plan: BillingPlan; interval: BillingInterval } {
+  // Current (new) prices
   if (priceId === process.env.STRIPE_PRICE_ESSENTIALS_MONTHLY) return { plan: "essentials", interval: "monthly" };
   if (priceId === process.env.STRIPE_PRICE_ESSENTIALS_ANNUAL)  return { plan: "essentials", interval: "annual" };
   if (priceId === process.env.STRIPE_PRICE_GROWTH_MONTHLY)     return { plan: "growth",     interval: "monthly" };
   if (priceId === process.env.STRIPE_PRICE_GROWTH_ANNUAL)      return { plan: "growth",     interval: "annual" };
+
+  // Legacy prices (existing subscriptions must continue to map correctly)
+  if (priceId === process.env.STRIPE_PRICE_ESSENTIALS_MONTHLY_LEGACY) return { plan: "essentials", interval: "monthly" };
+  if (priceId === process.env.STRIPE_PRICE_ESSENTIALS_ANNUAL_LEGACY)  return { plan: "essentials", interval: "annual" };
+  if (priceId === process.env.STRIPE_PRICE_GROWTH_MONTHLY_LEGACY)     return { plan: "growth",     interval: "monthly" };
+  if (priceId === process.env.STRIPE_PRICE_GROWTH_ANNUAL_LEGACY)      return { plan: "growth",     interval: "annual" };
+
   return { plan: "none", interval: "monthly" };
 }
 

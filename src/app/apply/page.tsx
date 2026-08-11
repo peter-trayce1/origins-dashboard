@@ -282,8 +282,8 @@ export default function ApplyPage() {
       "not-sure":    "Not sure yet",
     };
     const planLabels: Record<string, string> = {
-      essentials:  "Essentials (£375/month)",
-      growth:      "Growth (£795/month)",
+      essentials:  "Essentials (£150/month)",
+      growth:      "Growth (£450/month)",
       enterprise:  "Enterprise",
       guidance:    "I'd like guidance",
     };
@@ -465,9 +465,9 @@ export default function ApplyPage() {
               value={planInterest}
               onChange={setPlanInterest}
               options={[
-                { value: "essentials", label: "Essentials",          sub: "£375/month · up to 250 passports/year" },
-                { value: "growth",     label: "Growth",              sub: "£795/month · up to 750 passports/year" },
-                { value: "enterprise", label: "Enterprise",          sub: "Custom pricing · unlimited passports" },
+                { value: "essentials", label: "Essentials",          sub: "£150/month · up to 100 passports/year" },
+                { value: "growth",     label: "Growth",              sub: "£450/month · up to 500 passports/year" },
+                { value: "enterprise", label: "Enterprise",          sub: "Custom pricing · custom allowance" },
                 { value: "guidance",   label: "I'd like guidance",   sub: "Our team will help recommend the right plan" },
               ]}
             />

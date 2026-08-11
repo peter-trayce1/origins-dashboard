@@ -9,8 +9,8 @@ import type { Metadata } from "next";
 export const metadata: Metadata = { title: "Workspace under review — Known Objects" };
 
 const PLAN_LABELS: Record<string, string> = {
-  essentials: "Essentials (£375/month)",
-  growth:     "Growth (£795/month)",
+  essentials: "Essentials (£150/month)",
+  growth:     "Growth (£450/month)",
   enterprise: "Enterprise",
   guidance:   "I'd like guidance",
 };

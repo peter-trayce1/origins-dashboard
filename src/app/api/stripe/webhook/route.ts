@@ -4,6 +4,38 @@ import { getStripe } from "@/lib/stripe";
 import { planFromPriceId, passportLimitForPlan } from "@/lib/billing";
 import type Stripe from "stripe";
 
+// Determine if a Stripe price ID is a legacy price (pre-migration)
+function isLegacyPrice(priceId: string): boolean {
+  return !!(
+    priceId === process.env.STRIPE_PRICE_ESSENTIALS_MONTHLY_LEGACY ||
+    priceId === process.env.STRIPE_PRICE_ESSENTIALS_ANNUAL_LEGACY ||
+    priceId === process.env.STRIPE_PRICE_GROWTH_MONTHLY_LEGACY ||
+    priceId === process.env.STRIPE_PRICE_GROWTH_ANNUAL_LEGACY
+  );
+}
+
+// Determine passport allowance based on plan and whether it's a legacy subscription
+function getPassportLimitForPriceId(priceId: string): number | null {
+  const { plan } = planFromPriceId(priceId);
+  const isLegacy = isLegacyPrice(priceId);
+
+  // Legacy subscriptions retain their original allowances
+  if (isLegacy) {
+    if (plan === "essentials") return 250;
+    if (plan === "growth") return 750;
+  }
+
+  // New subscriptions use the new allowances
+  if (plan === "essentials") return 100;
+  if (plan === "growth") return 500;
+
+  // Trial and enterprise
+  if (plan === "trial") return 3;
+  if (plan === "enterprise") return null; // unlimited
+
+  return 0; // no plan
+}
+
 // Must run in Node.js runtime for Stripe signature verification
 export const runtime = "nodejs";
 
@@ -61,7 +93,8 @@ export async function POST(request: NextRequest) {
         const customerId = sub.customer as string;
         const priceId = sub.items.data[0]?.price.id ?? "";
         const { plan, interval } = planFromPriceId(priceId);
-        const limit = passportLimitForPlan(plan);
+        // Determine passport limit based on price ID (legacy vs current)
+        const limit = getPassportLimitForPriceId(priceId);
 
         await updateOrgByCustomer(customerId, {
           stripe_subscription_id: sub.id,
