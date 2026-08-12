@@ -1053,10 +1053,9 @@ export function PublicPassportPage({ passport, previewMode = false }: { passport
               {displayBrandName}
             </span>
           )}
-          <div className="flex items-center gap-1.5 text-[11px] text-[#8b8b8b] shrink-0">
-            <span>ID by</span>
-            <OriginsLogo className="w-3.5 h-3.5" />
-            <span className="font-medium text-[#555]">Known Objects</span>
+          <div className="flex items-center gap-1 text-[9px] text-[#bfbfbf] shrink-0">
+            <OriginsLogo className="w-3 h-3" />
+            <span className="font-normal text-[#c5c5c5]">Known Objects</span>
           </div>
         </div>
       </header>
