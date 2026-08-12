@@ -97,7 +97,7 @@ async function seed() {
       billing_plan:      "essentials",
       billing_status:    "active",
       billing_interval:  "monthly",
-      passport_limit:    250,
+      passport_limit:    100,
       current_period_end: periodEnd.toISOString(),
       // Clearly fake values — no real Stripe subscription needed
       stripe_customer_id:     "cus_demo_test_only",
@@ -114,7 +114,7 @@ async function seed() {
       billing_plan:      "essentials",
       billing_status:    "active",
       billing_interval:  "monthly",
-      passport_limit:    250,
+      passport_limit:    100,
       current_period_end: periodEnd.toISOString(),
       stripe_customer_id:     "cus_demo_test_only",
       stripe_subscription_id: "sub_demo_test_only",
@@ -263,7 +263,7 @@ async function seed() {
     Password: ${DEMO_PASSWORD}
 
     Plan:     Essentials · active · monthly
-    Usage:    0 / 250 Active Product Passports this year
+    Usage:    0 / 100 Active Product Passports this year
     Resets:   ${periodEnd.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })}
 
     Stripe:   No real Stripe account required.
