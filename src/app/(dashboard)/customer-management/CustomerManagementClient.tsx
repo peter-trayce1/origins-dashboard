@@ -667,8 +667,8 @@ function RevenueTab({ stats }: { stats: Stats | null }) {
   if (!stats) return <Spinner />;
 
   const rows = [
-    { label: "Essentials (monthly)", count: stats.essentialsOrgs, mrr: 375, arr: 4500 },
-    { label: "Growth (monthly)",     count: stats.growthOrgs,     mrr: 795, arr: 9540 },
+    { label: "Essentials (monthly)", count: stats.essentialsOrgs, mrr: 150, arr: 1500 },
+    { label: "Growth (monthly)",     count: stats.growthOrgs,     mrr: 450, arr: 4500 },
   ];
 
   return (

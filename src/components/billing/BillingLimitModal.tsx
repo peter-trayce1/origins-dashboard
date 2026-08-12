@@ -39,8 +39,8 @@ export function BillingLimitModal({ open, onClose, plan, limit }: Props) {
 
         <p className="text-[13px] text-[#525252] leading-relaxed">
           {isGrowth
-            ? `Your Growth plan includes up to ${limit ?? 750} Active Product Passports per year. For higher volumes or custom integrations, talk to us about an Enterprise plan.`
-            : `Your current plan includes up to ${limit ?? 250} Active Product Passports per year. Drafts are still available, but publishing new passports requires upgrading your plan or waiting until your annual allowance resets.`
+            ? `Your Growth plan includes up to ${limit ?? 500} Active Product Passports per year. For higher volumes or custom integrations, talk to us about an Enterprise plan.`
+            : `Your current plan includes up to ${limit ?? 100} Active Product Passports per year. Drafts are still available, but publishing new passports requires upgrading your plan or waiting until your annual allowance resets.`
           }
         </p>
 
