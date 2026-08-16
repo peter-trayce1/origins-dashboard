@@ -1,6 +1,6 @@
 // Accounts allowed to override the brand name + logo per passport (demo accounts).
 // NEXT_PUBLIC_ so it is available on both client and server. Comma-separated.
-const DEMO_EMAILS = (process.env.NEXT_PUBLIC_DEMO_EMAILS ?? "demo@knownobjects.io")
+const DEMO_EMAILS = (process.env.NEXT_PUBLIC_DEMO_EMAILS ?? "demo@origins-id.com")
   .split(",")
   .map((e) => e.trim().toLowerCase())
   .filter(Boolean);
