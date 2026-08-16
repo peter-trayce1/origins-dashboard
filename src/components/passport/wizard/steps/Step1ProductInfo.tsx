@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Upload, X, Loader2, ChevronDown, Lock, Plus, Trash2, Sparkles } from "lucide-react";
 import type { SimilarProduct } from "@/types/wizard";
 import { useOrganisation } from "@/hooks/useOrganisation";
+import { isDemoEmail } from "@/lib/demo-account";
 
 const CATEGORIES = [
   "T-shirts & Tops", "Shirts & Blouses", "Knitwear", "Outerwear", "Coats & Jackets", "Dresses",
@@ -167,6 +168,7 @@ function ManufacturingDatePicker({
 export function Step1ProductInfo() {
   const { step1, setStep1 } = useWizardStore();
   const { org } = useOrganisation();
+  const isDemo = isDemoEmail(org?.userEmail);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
@@ -217,14 +219,16 @@ export function Step1ProductInfo() {
         </div>
       )}
 
-      {/* Brand identity override — override the brand name and logo for this passport only. */}
-      <BrandIdentityOverride
-        name={step1.brand_name_override}
-        logoUrl={step1.brand_logo_override}
-        accountBrandName={org?.brandName ?? ""}
-        onName={(v) => update("brand_name_override", v)}
-        onLogo={(v) => update("brand_logo_override", v)}
-      />
+      {/* Brand identity — demo account only. Lets the demo build passports for any brand. */}
+      {isDemo && (
+        <DemoBrandIdentity
+          name={step1.brand_name_override}
+          logoUrl={step1.brand_logo_override}
+          accountBrandName={org?.brandName ?? ""}
+          onName={(v) => update("brand_name_override", v)}
+          onLogo={(v) => update("brand_logo_override", v)}
+        />
+      )}
 
       {/* Product name — always visible at top */}
       <div className="space-y-1">
@@ -578,7 +582,7 @@ function SimilarProductCard({
 
 // ── Demo-only brand identity override ─────────────────────────────────────────
 
-function BrandIdentityOverride({
+function DemoBrandIdentity({
   name,
   logoUrl,
   accountBrandName,
@@ -617,7 +621,7 @@ function BrandIdentityOverride({
     <div className="border border-[#0e6dea]/30 bg-[#0e6dea]/[0.04] rounded-xl p-3 space-y-2.5">
       <div className="flex items-center gap-1.5">
         <Sparkles className="h-3.5 w-3.5 text-[#0e6dea]" />
-        <span className="text-[11px] font-semibold text-[#0e6dea] uppercase tracking-wide">Brand identity</span>
+        <span className="text-[11px] font-semibold text-[#0e6dea] uppercase tracking-wide">Demo · Brand identity</span>
       </div>
       <p className="text-[11px] text-[#525252] -mt-0.5">
         Override the brand name and logo shown at the top of this passport. Leave blank to use {accountBrandName || "the account brand"}.
