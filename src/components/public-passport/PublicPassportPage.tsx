@@ -1103,13 +1103,13 @@ export function PublicPassportPage({ passport, previewMode = false }: { passport
           <div>
             {/* Hero image — Product tab only */}
             {passport.primary_image_url ? (
-              <div className="w-full aspect-[4/5] bg-[#fafaf8] flex items-center justify-center overflow-hidden p-8">
+              <div className="w-full aspect-[4/5] bg-[#fafaf8] flex items-center justify-center overflow-hidden">
                 <Image
                   src={passport.primary_image_url}
                   alt={passport.product_name}
                   width={430}
                   height={540}
-                  className="w-full h-full object-contain"
+                  className="w-full h-full object-cover"
                   priority
                 />
               </div>

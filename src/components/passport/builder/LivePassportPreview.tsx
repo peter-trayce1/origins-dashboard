@@ -436,7 +436,7 @@ export function LivePassportPreview({
     .sort((a, b) => (a.tier ?? 99) - (b.tier ?? 99))[0]?.country ?? "";
 
   const composition = s2.materials.length > 0
-    ? s2.materials
+    ? [...s2.materials]
         .sort((a, b) => (b.percentage ?? 0) - (a.percentage ?? 0))
         .map((m) => `${m.percentage ?? "?"}% ${m.material_name}`)
         .join(", ")
@@ -506,11 +506,11 @@ export function LivePassportPreview({
             {activeTab === "Product" && (
               <div>
                 {/* Hero image */}
-                <div className="w-full aspect-[4/5] bg-[#fafaf8] flex items-center justify-center overflow-hidden p-5">
+                <div className="w-full aspect-[4/5] bg-[#fafaf8] flex items-center justify-center overflow-hidden">
                   {s1.primary_image_url ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={s1.primary_image_url} alt={s1.product_name}
-                      className="w-full h-full object-contain"
+                      className="w-full h-full object-cover"
                       onError={(e) => { e.currentTarget.style.display = "none"; }}
                     />
                   ) : (
