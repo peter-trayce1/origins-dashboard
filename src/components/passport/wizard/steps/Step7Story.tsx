@@ -40,9 +40,9 @@ function SectionImageUpload({
 
   if (url) {
     return (
-      <div className="relative group rounded-xl overflow-hidden border border-[#E8E8E6] bg-[#F9F9F8]" style={{ height: 140 }}>
+      <div className="relative group rounded-xl overflow-hidden border border-[#E8E8E6] bg-[#F9F9F8]">
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={url} alt="" className="w-full h-full object-cover" />
+        <img src={url} alt="" className="block w-full h-auto" />
         <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center">
           <button
             type="button"

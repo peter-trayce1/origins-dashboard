@@ -861,9 +861,9 @@ export function LivePassportPreview({
 
                 {/* Product story image */}
                 {s7.product_story_image_url && (
-                  <div className="mt-0.5 w-full aspect-[4/3] overflow-hidden">
+                  <div className="mt-0.5 w-full">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={s7.product_story_image_url} alt="" className="w-full h-full object-cover" />
+                    <img src={s7.product_story_image_url} alt="" className="block w-full h-auto" />
                   </div>
                 )}
 
@@ -878,9 +878,9 @@ export function LivePassportPreview({
 
                 {/* Makers image */}
                 {s7.makers_image_url && (
-                  <div className="mt-0.5 w-full aspect-[4/3] overflow-hidden">
+                  <div className="mt-0.5 w-full">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={s7.makers_image_url} alt="" className="w-full h-full object-cover" />
+                    <img src={s7.makers_image_url} alt="" className="block w-full h-auto" />
                   </div>
                 )}
 

@@ -1018,7 +1018,7 @@ export function PublicPassportPage({ passport, previewMode = false }: { passport
     || "";
 
   const composition = passport.product_materials.length > 0
-    ? passport.product_materials
+    ? [...passport.product_materials]
         .sort((a, b) => (b.percentage ?? 0) - (a.percentage ?? 0))
         .map((m) => `${m.percentage ?? "?"}% ${m.material_name}`)
         .join(", ")
@@ -1445,9 +1445,9 @@ export function PublicPassportPage({ passport, previewMode = false }: { passport
 
             {/* Product story image */}
             {passport.product_story_image_url && (
-              <div className="w-full aspect-[16/9] overflow-hidden">
+              <div className="w-full">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={passport.product_story_image_url} alt="" className="w-full h-full object-cover" />
+                <img src={passport.product_story_image_url} alt="" className="block w-full h-auto" />
               </div>
             )}
 
@@ -1466,9 +1466,9 @@ export function PublicPassportPage({ passport, previewMode = false }: { passport
 
             {/* Makers image */}
             {passport.makers_image_url && (
-              <div className="w-full aspect-[16/9] overflow-hidden">
+              <div className="w-full">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={passport.makers_image_url} alt="" className="w-full h-full object-cover" />
+                <img src={passport.makers_image_url} alt="" className="block w-full h-auto" />
               </div>
             )}
 

@@ -180,6 +180,16 @@ export const useWizardStore = create<WizardStore>((set) => ({
 
   hydrate: (passport) => {
     const p = passport as Record<string, unknown>;
+    // Child rows are stored with a sort_order but PostgREST returns them
+    // unordered. Sort by sort_order so the builder shows rows in the order the
+    // user entered them (otherwise materials, circularity actions, etc. appear
+    // reshuffled on reload).
+    const bySort = <T,>(arr: unknown): T[] =>
+      [...((arr as T[]) ?? [])].sort(
+        (a, b) =>
+          ((a as { sort_order?: number | null }).sort_order ?? 0) -
+          ((b as { sort_order?: number | null }).sort_order ?? 0)
+      );
     set({
       passportId: p.id as string,
       currentStep: (p.wizard_step as number) ?? 1,
@@ -210,7 +220,7 @@ export const useWizardStore = create<WizardStore>((set) => ({
         brand_logo_override: (p.brand_logo_override as string) ?? "",
       },
       step2: {
-        materials: (p.product_materials as WizardStep2["materials"]) ?? [],
+        materials: bySort<WizardStep2["materials"][number]>(p.product_materials),
         dyeing_notes: "",
         finishing_notes: "",
         restricted_substances_ok: null,
@@ -220,7 +230,7 @@ export const useWizardStore = create<WizardStore>((set) => ({
         ...((p.passport_material_extras as Record<string, unknown>) ?? {}),
       },
       step3: {
-        facilities: ((p.product_facilities as Record<string, unknown>[]) ?? []).map((f) => ({
+        facilities: bySort<Record<string, unknown>>(p.product_facilities).map((f) => ({
           facility_name:          (f.facility_name as string) ?? "",
           tier:                   (f.tier as number) ?? 1,
           process_stage:          (f.process_stage as string) ?? "",
@@ -245,7 +255,7 @@ export const useWizardStore = create<WizardStore>((set) => ({
         sustainability_claims: (p.sustainability_claims as string[]) ?? [],
         claim_evidence_urls: (p.claim_evidence_urls as Record<string, string>) ?? {},
         impact_data_source: (p.impact_data_source as string) ?? "brand_declared",
-        impact_metrics: ((p.impact_metrics as Record<string, unknown>[]) ?? []).map((m) => ({
+        impact_metrics: bySort<Record<string, unknown>>(p.impact_metrics).map((m) => ({
           metric_key: (m.metric_key as string) ?? "",
           metric_name: (m.label as string) ?? (m.metric_name as string) ?? "",
           metric_type: (m.metric_type as WizardStep4["impact_metrics"][0]["metric_type"]) ?? "other",
@@ -281,8 +291,8 @@ export const useWizardStore = create<WizardStore>((set) => ({
         compliance_notes: "",
       },
       step6: {
-        care_instructions: (p.care_instructions as WizardStep6["care_instructions"]) ?? [],
-        circularity_actions: (p.circularity_actions as WizardStep6["circularity_actions"]) ?? [],
+        care_instructions: bySort<WizardStep6["care_instructions"][number]>(p.care_instructions),
+        circularity_actions: bySort<WizardStep6["circularity_actions"][number]>(p.circularity_actions),
         warranty_info: (p.warranty_info as string) ?? "",
         repairability_score: (p.repairability_score as number) ?? "",
         spare_parts_available: (p.spare_parts_available as boolean) ?? false,
