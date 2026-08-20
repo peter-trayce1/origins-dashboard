@@ -1,9 +1,11 @@
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
-// EMAIL_FROM is set via the EMAIL_FROM environment variable.
-// Do not change the fallback here until the knownobjects.io sending domain
-// is verified in Resend and the env var is updated in Vercel.
-const EMAIL_FROM     = process.env.EMAIL_FROM ?? "noreply@origins-id.com";
-const APP_URL        = process.env.NEXT_PUBLIC_APP_URL ?? "https://app.knownobjects.io";
+
+// Centralised Resend sender configuration. Override via the EMAIL_FROM /
+// EMAIL_REPLY_TO environment variables (set both in Vercel for production).
+// Requires the knownobjects.io sending domain to be verified in Resend.
+const FROM_EMAIL = process.env.EMAIL_FROM || "Known Objects <hello@knownobjects.io>";
+const REPLY_TO   = process.env.EMAIL_REPLY_TO || "hello@knownobjects.io";
+const APP_URL    = process.env.NEXT_PUBLIC_APP_URL ?? "https://app.knownobjects.io";
 
 interface SendEmailOptions {
   to: string;
@@ -28,7 +30,9 @@ async function sendEmail({ to, subject, html }: SendEmailOptions): Promise<SendR
         Authorization: `Bearer ${RESEND_API_KEY}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ from: EMAIL_FROM, to, subject, html }),
+      // Raw Resend REST API expects snake_case `reply_to` (the Node SDK's
+      // `replyTo` equivalent).
+      body: JSON.stringify({ from: FROM_EMAIL, to, reply_to: REPLY_TO, subject, html }),
     });
     if (!res.ok) {
       const body = await res.text();
