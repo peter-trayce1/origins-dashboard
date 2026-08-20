@@ -1,9 +1,11 @@
 import { redirect } from "next/navigation";
+import { cookies, headers } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { BillingPageClient } from "@/components/billing/BillingPageClient";
 import { getBillingInfo } from "@/lib/billing";
 import { isStripeConfigured } from "@/lib/stripe";
+import { resolveCurrency, CURRENCY_COOKIE } from "@/lib/currency";
 import type { Metadata } from "next";
 import type { BillingInfo } from "@/types/billing";
 
@@ -29,6 +31,13 @@ export default async function BillingPage({
   const params = await searchParams;
   const success = params.success === "true";
   const cancelled = params.cancelled === "true";
+
+  // Resolve pricing currency: manual-override cookie → Vercel geolocation → GBP.
+  const [cookieStore, headerStore] = await Promise.all([cookies(), headers()]);
+  const currency = resolveCurrency({
+    cookie: cookieStore.get(CURRENCY_COOKIE)?.value,
+    country: headerStore.get("x-vercel-ip-country"),
+  });
 
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -66,7 +75,7 @@ export default async function BillingPage({
         title="Billing"
         description="Manage your Known Objects subscription, payment method and Active Product Passport usage."
       />
-      <BillingPageClient billing={billing} success={success} cancelled={cancelled} />
+      <BillingPageClient billing={billing} success={success} cancelled={cancelled} initialCurrency={currency} />
     </div>
   );
 }

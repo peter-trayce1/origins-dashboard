@@ -74,7 +74,13 @@ export async function canPublishPassport(
 }
 
 export function planFromPriceId(priceId: string): { plan: BillingPlan; interval: BillingInterval } {
-  // Current (new) prices
+  // Current (new) currency-specific prices — GBP and EUR map to the same plan.
+  if (priceId === process.env.STRIPE_PRICE_ESSENTIALS_MONTHLY_GBP || priceId === process.env.STRIPE_PRICE_ESSENTIALS_MONTHLY_EUR) return { plan: "essentials", interval: "monthly" };
+  if (priceId === process.env.STRIPE_PRICE_ESSENTIALS_ANNUAL_GBP  || priceId === process.env.STRIPE_PRICE_ESSENTIALS_ANNUAL_EUR)  return { plan: "essentials", interval: "annual" };
+  if (priceId === process.env.STRIPE_PRICE_GROWTH_MONTHLY_GBP     || priceId === process.env.STRIPE_PRICE_GROWTH_MONTHLY_EUR)     return { plan: "growth",     interval: "monthly" };
+  if (priceId === process.env.STRIPE_PRICE_GROWTH_ANNUAL_GBP      || priceId === process.env.STRIPE_PRICE_GROWTH_ANNUAL_EUR)      return { plan: "growth",     interval: "annual" };
+
+  // Current (new) single-currency prices
   if (priceId === process.env.STRIPE_PRICE_ESSENTIALS_MONTHLY) return { plan: "essentials", interval: "monthly" };
   if (priceId === process.env.STRIPE_PRICE_ESSENTIALS_ANNUAL)  return { plan: "essentials", interval: "annual" };
   if (priceId === process.env.STRIPE_PRICE_GROWTH_MONTHLY)     return { plan: "growth",     interval: "monthly" };

@@ -9,17 +9,18 @@ import {
 import { toast } from "sonner";
 import { PLAN_CONFIG } from "@/types/billing";
 import type { BillingInfo, BillingInterval } from "@/types/billing";
+import {
+  formatPrice,
+  CURRENCY_COOKIE,
+  CURRENCY_COOKIE_MAX_AGE,
+  type Currency,
+} from "@/lib/currency";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 function formatDate(iso: string | null): string {
   if (!iso) return "—";
   return new Date(iso).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
-}
-
-function formatPrice(p: number | null, interval: "monthly" | "annual"): string {
-  if (p === null) return "Custom";
-  return interval === "monthly" ? `£${p.toLocaleString()}/month` : `£${p.toLocaleString()}/year`;
 }
 
 function usageColor(pct: number): string {
@@ -90,18 +91,47 @@ function IntervalToggle({ interval, onChange }: { interval: BillingInterval; onC
   );
 }
 
+// ── Currency selector ─────────────────────────────────────────────────────────
+
+function CurrencySelector({ currency, onChange }: { currency: Currency; onChange: (v: Currency) => void }) {
+  return (
+    <div className="flex items-center bg-[#F4F4F3] rounded-xl p-1 gap-1">
+      {(["GBP", "EUR"] as Currency[]).map((v) => (
+        <button
+          key={v}
+          onClick={() => onChange(v)}
+          className={`px-3 py-1.5 rounded-lg text-[13px] font-medium transition-colors ${
+            currency === v ? "bg-white text-black shadow-sm" : "text-[#525252] hover:text-black"
+          }`}
+        >
+          {v === "GBP" ? "£ GBP" : "€ EUR"}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 // ── Main component ────────────────────────────────────────────────────────────
 
 interface Props {
   billing: BillingInfo;
   success?: boolean;
   cancelled?: boolean;
+  initialCurrency: Currency;
 }
 
-export function BillingPageClient({ billing, success, cancelled }: Props) {
+export function BillingPageClient({ billing, success, cancelled, initialCurrency }: Props) {
   const [interval, setInterval] = useState<BillingInterval>(billing.billingInterval ?? "monthly");
+  const [currency, setCurrencyState] = useState<Currency>(initialCurrency);
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
   const [loadingPortal, setLoadingPortal] = useState(false);
+
+  // Persist a manual currency choice in a cookie so it takes precedence over
+  // geolocation on future visits and is read server-side by the checkout route.
+  function setCurrency(next: Currency) {
+    setCurrencyState(next);
+    document.cookie = `${CURRENCY_COOKIE}=${next}; path=/; max-age=${CURRENCY_COOKIE_MAX_AGE}; SameSite=Lax`;
+  }
 
   const { activePassportCount, passportLimit, billingPlan, billingStatus, billingInterval, currentPeriodEnd, trialEndDate, trialDaysRemaining } = billing;
   const isTrial = billingPlan === "trial";
@@ -123,7 +153,7 @@ export function BillingPageClient({ billing, success, cancelled }: Props) {
       const res = await fetch("/api/billing/create-checkout-session", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ plan, interval }),
+        body: JSON.stringify({ plan, interval, currency }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -424,7 +454,10 @@ export function BillingPageClient({ billing, success, cancelled }: Props) {
           <p className="text-[13px] font-semibold text-black">
             {isTrial ? "Continue after your trial" : "Plans"}
           </p>
-          <IntervalToggle interval={interval} onChange={setInterval} />
+          <div className="flex items-center gap-3 flex-wrap">
+            <CurrencySelector currency={currency} onChange={setCurrency} />
+            <IntervalToggle interval={interval} onChange={setInterval} />
+          </div>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -453,12 +486,10 @@ export function BillingPageClient({ billing, success, cancelled }: Props) {
 
                 <div className="space-y-1 mb-4">
                   <p className="text-[13px] font-semibold text-black">{cfg.label}</p>
-                  {cfg.monthlyPrice !== null ? (
+                  {planKey !== "enterprise" ? (
                     <div>
                       <p className="text-2xl font-bold text-black">
-                        {interval === "monthly"
-                          ? `£${cfg.monthlyPrice}`
-                          : `£${cfg.annualPrice?.toLocaleString()}`}
+                        {formatPrice(planKey, interval, currency)}
                       </p>
                       <p className="text-[11px] text-[#8C8C8C]">
                         {interval === "monthly" ? "per month" : "per year · billed annually"}
@@ -571,7 +602,7 @@ export function BillingPageClient({ billing, success, cancelled }: Props) {
 
       {/* Bottom note */}
       <p className="text-[11px] text-[#8C8C8C] text-center pb-4">
-        All prices in GBP. Subscriptions renew automatically. Cancel anytime through the billing portal.{" "}
+        All prices in {currency}. Subscriptions renew automatically. Cancel anytime through the billing portal.{" "}
         <a href="mailto:hello@knownobjects.io" className="underline hover:text-black">Contact us</a> with any billing questions.
       </p>
     </div>
