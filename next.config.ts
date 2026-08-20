@@ -18,6 +18,27 @@ const nextConfig: NextConfig = {
       },
     ];
   },
+  // Rebrand: existing printed QR codes point at the old origins-id.com domains.
+  // Keep the QR codes unchanged and redirect those hosts to the Known Objects
+  // equivalents, preserving the path (all these paths already serve on
+  // knownobjects.io). Requires passport.origins-id.com and app.origins-id.com
+  // to be attached to this Vercel project so requests reach the app.
+  async redirects() {
+    return [
+      {
+        source: "/:path*",
+        has: [{ type: "host", value: "passport.origins-id.com" }],
+        destination: "https://passport.knownobjects.io/:path*",
+        permanent: true,
+      },
+      {
+        source: "/:path*",
+        has: [{ type: "host", value: "app.origins-id.com" }],
+        destination: "https://app.knownobjects.io/:path*",
+        permanent: true,
+      },
+    ];
+  },
 };
 
 export default nextConfig;
