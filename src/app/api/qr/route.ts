@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { qrTargetUrl } from "@/lib/public-url";
 
 export async function POST(request: NextRequest) {
   const supabase = await createClient();
@@ -31,8 +32,11 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "";
-  const targetUrl = `${appUrl}/c/${passport.passport_code}`;
+  if (!passport.passport_code) {
+    return NextResponse.json({ error: "Passport has no code yet" }, { status: 400 });
+  }
+  // Public passport scan entry — must be the public passport domain, not the app domain.
+  const targetUrl = qrTargetUrl(passport.passport_code);
 
   const { data: qr, error } = await supabase
     .from("qr_codes")

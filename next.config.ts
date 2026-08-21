@@ -25,6 +25,15 @@ const nextConfig: NextConfig = {
   // to be attached to this Vercel project so requests reach the app.
   async redirects() {
     return [
+      // Public passport scan entry must live on the public passport domain, not
+      // the app/dashboard domain. Bounce any /c/ hit on the app host over to the
+      // passport host so existing/printed app-domain QR codes keep working.
+      {
+        source: "/c/:code*",
+        has: [{ type: "host", value: "app.knownobjects.io" }],
+        destination: "https://passport.knownobjects.io/c/:code*",
+        permanent: true,
+      },
       {
         source: "/:path*",
         has: [{ type: "host", value: "passport.origins-id.com" }],

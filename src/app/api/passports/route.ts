@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { makeUniqueSlug } from "@/lib/slugify";
 import { calculateCompleteness } from "@/lib/completeness";
+import { qrTargetUrl } from "@/lib/public-url";
 
 export async function GET() {
   const supabase = await createClient();
@@ -61,14 +62,14 @@ export async function POST(request: NextRequest) {
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-  // Auto-create a QR code immediately — tied to the ORI passport code, not the slug
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "";
+  // Auto-create a QR code immediately — tied to the passport code, not the slug.
+  // Target must be the public passport domain, never the app domain.
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   await (supabase.from("qr_codes") as any).insert({
     passport_id: data.id,
     brand_id,
     label: "Default",
-    target_url: `${appUrl}/c/${data.passport_code}`,
+    target_url: qrTargetUrl(data.passport_code),
     is_active: true,
   });
 
